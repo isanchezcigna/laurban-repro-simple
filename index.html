@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor HLS con Bootstrap</title>
+    <!-- Incluir Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .player-container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        audio {
+            width: 100%;
+            height: 40px;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <h1 class="text-center">La Urban Low Profile</h1>
+        <audio id="audio" controls autoplay></audio>
+    </div>
+
+    <!-- Incluir hls.js desde un CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        var audio = document.getElementById('audio');
+        var hlsUrl = 'https://radio.laurban.cl/hls/laurban/live.m3u8';
+        var mp3Url = 'https://radio.laurban.cl:8000/laurban.mp3';
+
+        if (Hls.isSupported()) {
+            var hls = new Hls();
+            hls.loadSource(hlsUrl);
+            hls.attachMedia(audio);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                audio.play();
+            });
+        } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+            // Para navegadores que soportan HLS nativamente (como Safari)
+            audio.src = hlsUrl;
+            audio.addEventListener('canplay', function() {
+                audio.play();
+            });
+        } else {
+            // Si no es compatible, usar el flujo MP3
+            audio.src = mp3Url;
+            audio.addEventListener('canplay', function() {
+                audio.play();
+            });
+        }
+    </script>
+</body>
+</html>

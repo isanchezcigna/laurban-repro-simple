@@ -194,3 +194,9 @@ audio::-webkit-media-controls-fullscreen-button {
     background-color: #1f1c2c; /* Fondo oscuro para el modal */
     color: white;
 }
+/* Media query para dispositivos con pantallas más pequeñas */
+@media (max-width: 1440px) {
+    body {
+        transform: scale(0.8);
+    }
+}

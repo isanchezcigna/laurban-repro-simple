@@ -1,0 +1,128 @@
+/* Estilos para la página pública de la estación "laurban" */
+
+#openChatButton {
+    background-color: #6441a5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    position: fixed;
+    bottom: 40px;
+    left: 30px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Añadir sombra */
+    transition: box-shadow 0.3s ease; /* Transición suave para la sombra */
+}
+
+#openChatButton:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Sombra más intensa al pasar el ratón */
+}
+
+#newRequestButton {
+    position: fixed; /* Puedes ajustar la posición según tus necesidades */
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
+}
+
+body.station-laurban {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 80vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+body.station-laurban main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 80vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+body.station-laurban #logo {
+    max-width: 400px; /* Ajusta el tamaño máximo del logo */
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    margin-bottom: 0px;
+}
+
+body.station-laurban #instagram {
+    max-width: 150px; /* Ajusta el tamaño máximo de la imagen de Instagram */
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center;
+    margin-top: 20px;
+    bottom: 20px;
+    right: 30px;
+    position: fixed;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)); /* Añadir sombra con drop-shadow */
+    transition: filter 0.3s ease; /* Transición suave para la sombra */    transition: box-shadow 0.3s ease; /* Transición suave para la sombra */
+}
+
+body.station-laurban #instagram:hover {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)); /* Sombra más intensa al pasar el ratón */
+}
+
+body.station-laurban .public-page .radio-player-widget {
+    max-height: 300px; /* Ajusta el alto máximo del reproductor */
+    width: 100%;
+    max-width: 600px; /* Ajusta el ancho máximo del reproductor */
+}
+
+body.station-laurban #public-radio-player {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centra el contenido verticalmente */
+    align-items: center;
+    width: 100%;
+    position: relative;
+}
+
+.form-range {
+    width: 60px;
+}
+
+@media screen and (min-width: 768px) {
+    body.station-laurban {
+        justify-content: flex-start;
+    }
+
+    body.station-laurban #logo {
+        margin-bottom: 0;
+        max-width: 500px;
+    }
+
+    body.station-laurban #instagram {
+        max-width: 150px;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        margin-top: 0;
+    }
+
+    body.station-laurban .public-page .radio-player-widget {
+        margin-bottom: 0;
+    }
+}
+
+/* Ajuste del estilo para la página minimalista */
+body.page-minimal .public-page {
+    margin: 2.5rem 0;
+    min-height: auto; /* Elimina la altura mínima */
+    display: flex;
+    flex-direction: column; /* Asegura que los elementos se dispongan en columna */
+    justify-content: center; /* Centra el contenido verticalmente */
+    align-items: center; /* Centra el contenido horizontalmente */
+}

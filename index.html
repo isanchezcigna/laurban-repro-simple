@@ -4,186 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La Urban // Reproductor Light</title>
-    <!-- Incluir Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Incluir Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Incluir Font Awesome para los iconos -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #1f1c2c, #928dab);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: 'Roboto', sans-serif;
-        }
-        .player-container {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            position: relative;
-        }
-        .logo {
-            width: 100%;
-            max-width: 100%;
-            height: auto;
-            margin-bottom: 10px;
-            transition: all 0.3s ease-in-out;
-        }
-        .logo.active {
-            animation: colorChange 1s infinite alternate;
-        }
-        @keyframes colorChange {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
-        }
-        .cover {
-            width: 100%;
-            border-radius: 10px;
-        }
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 10px;
-        }
-        .play-button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 3rem;
-            cursor: pointer;
-        }
-        audio {
-            width: 100%;
-            height: 40px;
-            margin-top: 10px;
-            border-radius: 10px;
-        }
-        .song-info {
-            margin-top: 10px;
-        }
-        .marquee {
-            width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            box-sizing: border-box;
-        }
-        .marquee span {
-            display: inline-block;
-            padding-left: 100%;
-            animation: marquee 15s linear infinite;
-        }
-        @keyframes marquee {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
-        }
-        #artist {
-            font-size: 1.2rem; /* Nombre del artista un poco más grande */
-        }
-        audio::-webkit-media-controls-panel {
-            display: flex;
-            justify-content: space-between;
-        }
-        audio::-webkit-media-controls-play-button,
-        audio::-webkit-media-controls-pause-button,
-        audio::-webkit-media-controls-mute-button,
-        audio::-webkit-media-controls-unmute-button,
-        audio::-webkit-media-controls-volume-slider {
-            display: block !important;
-        }
-        audio::-webkit-media-controls-current-time-display,
-        audio::-webkit-media-controls-time-remaining-display,
-        audio::-webkit-media-controls-timeline,
-        audio::-webkit-media-controls-seek-back-button,
-        audio::-webkit-media-controls-seek-forward-button,
-        audio::-webkit-media-controls-playback-rate-button,
-        audio::-webkit-media-controls-fullscreen-button {
-            display: none;
-        }
-        .btn-container {
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-around;
-        }
-        .btn-container a, .btn-container button {
-            color: white;
-            font-size: 1.5rem; /* Ajustar el tamaño de los íconos */
-            margin: 0 10px; /* Separar los íconos */
-        }
-        .btn-primary-custom {
-            background-color: rgba(0, 0, 0, 0.7);
-            border: none;
-            color: white;
-            font-size: 1.2rem; /* Ajustar el tamaño del botón */
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: background 0.3s ease-in-out;
-        }
-        .btn-primary-custom:hover {
-            background: linear-gradient(135deg, #1f1c2c, #928dab);
-            color: white;
-            animation: move 1s infinite;
-        }
-        .btn-primary-custom:hover i {
-            display: none;
-        }
-        .btn-primary-custom:hover::before {
-            font-family: 'Font Awesome 5 Free';
-            font-weight: 900;
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        }
-        @keyframes move {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .footer {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .modal-body {
-            min-height: 850px; /* Mínimo de alto para el cuerpo del modal */
-        }
-        .modal-content {
-            background-color: #1f1c2c; /* Fondo oscuro para el modal */
-            color: white;
-        }
-    </style>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="manifest" href="site.webmanifest">
+
 </head>
 <body>
     <div class="player-container">
-        <img src="logo.png" alt="Logo" class="logo" id="logo">
+        <img src="img/logo.png" alt="Logo" class="logo" id="logo">
         <div class="cover-container">
-            <img id="cover" src="https://radio.laurban.cl/api/station/laurban/art/842915e20ced6d034c60329bf797f1a4-1715584196.jpg" alt="Carátula del Álbum" class="cover">
+            <img id="cover" src="https://radio.laurban.cl/static/uploads/laurban/album_art.1716842078.jpg" alt="Carátula del Álbum" class="cover">
         </div>
         <div class="song-info">
             <div class="marquee">
                 <span id="song">Nombre de la Canción</span>
             </div>
         </div>
-        <audio id="audio" controls controlsList="noplaybackrate"></audio>
+        <audio id="audio" controls controlsList="noplaybackrate" preload="none"></audio>
+        <div class="next-song-info">
+            <div class="marquee">
+                <span id="next-song">Nombre de la Canción</span>
+            </div>
+        </div>
         <div class="overlay" id="overlay">
             <button id="playButton" class="play-button"><i class="fas fa-play"></i></button>
         </div>
@@ -193,15 +38,14 @@
         <button class="btn btn-primary-custom" data-toggle="modal" data-target="#requestModal"><i class="fas fa-music"></i> Pedir Canción</button>
     </div>
     <div class="btn-container">
-        <a href="whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz" target="_blank"><i class="fab fa-whatsapp"></i></a>
-        <a href="https://www.instagram.com/laurban.cl" target="_blank"><i class="fab fa-instagram"></i></a>
+        <a href="whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz" target="_blank"><i class="fab fa-whatsapp icon-class"></i></a>
+        <a href="https://www.instagram.com/laurban.cl" target="_blank"><i class="fab fa-instagram icon-class"></i></a>
     </div>
 
     <div class="footer">
-        <p>&copy; 2009 Radio Urban - La Urban</p>
+        <p>&copy; 2009 Radio Urban - 2024 La Urban</p>
     </div>
 
-    <!-- Modal -->
     <div class="modal fade" id="requestModal" tabindex="-1" role="dialog" aria-labelledby="requestModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -212,122 +56,15 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <iframe src="https://radio.laurban.cl/public/laurban/embed-requests?theme=dark" width="100%" height="850px" frameborder="0"></iframe>
+                    <iframe id="requestIframe" width="100%" height="600px" frameborder="0"></iframe>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Incluir jQuery y Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!-- Incluir hls.js desde un CDN -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script>
-        var audio = document.getElementById('audio');
-        var playButton = document.getElementById('playButton');
-        var overlay = document.getElementById('overlay');
-        var logo = document.getElementById('logo');
-        var hlsUrl = 'https://radio.laurban.cl/hls/laurban/live.m3u8';
-        var mp3Url = 'https://radio.laurban.cl:8000/laurban.mp3';
-
-        function initializePlayer() {
-            if (Hls.isSupported()) {
-                var hls = new Hls();
-                hls.loadSource(hlsUrl);
-                hls.attachMedia(audio);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    audio.play().catch(error => {
-                        console.error('Error al reproducir el audio:', error);
-                    });
-                });
-            } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-                // Para navegadores que soportan HLS nativamente (como Safari)
-                audio.src = hlsUrl;
-                audio.addEventListener('canplay', function() {
-                    audio.play().catch(error => {
-                        console.error('Error al reproducir el audio:', error);
-                    });
-                });
-            } else {
-                // Si no es compatible, usar el flujo MP3
-                audio.src = mp3Url;
-                audio.addEventListener('canplay', function() {
-                    audio.play().catch(error => {
-                        console.error('Error al reproducir el audio:', error);
-                    });
-                });
-            }
-            // Pasar información de la canción y la carátula
-            audio.setAttribute('title', document.getElementById('song').textContent);
-            audio.setAttribute('poster', document.getElementById('cover').src);
-        }
-
-        playButton.addEventListener('click', function() {
-            initializePlayer();
-            overlay.style.display = 'none';
-            logo.classList.add('active'); // Activar la animación del logo
-            updateSongInfo(); // Forzar una actualización al pulsar el botón
-        });
-
-        function updateSongInfo() {
-            const defaultCover = 'https://radio.laurban.cl/api/station/laurban/art/842915e20ced6d034c60329bf797f1a4-1715584196.jpg';
-            fetch('https://radio.laurban.cl/api/nowplaying/laurban')
-                .then(response => response.json())
-                .then(data => {
-                    var cover = document.getElementById('cover');
-                    var song = document.getElementById('song');
-                    var title = document.title;
-
-                    // Verificar que data.now_playing y sus propiedades existen
-                    if (data.now_playing && data.now_playing.song && data.now_playing.song.artist && data.now_playing.song.title) {
-                        // Extraer la parte antes y después del punto y coma
-                        var [mainArtist, extraArtist] = data.now_playing.song.artist.split(';').map(part => part.trim());
-
-                        // Variables para el artista y el título corregidos
-                        var artistName = mainArtist;
-                        var songName = data.now_playing.song.title;
-
-                        // Verificar si el título contiene la parte extra del artista
-                        if (songName.includes(extraArtist)) {
-                            // Si el título contiene la parte extra, solo actualizamos el artist
-                            artistName = mainArtist;
-                        } else if (extraArtist){
-                            // Si no, actualizamos el artist y modificamos el título
-                            artistName = mainArtist;
-                            songName = `${songName} (feat. ${extraArtist})`;
-                        } else {
-                            // Si no hay parte extra, solo actualizamos el artist
-                            artistName = mainArtist;
-                        }
-
-                        // Crear la variable songText que es el merge de ambas
-                        var songText = `${artistName} - ${songName}`;
-
-                        // Actualizar la información de la canción
-                        cover.src = data.now_playing.song.art ? data.now_playing.song.art : defaultCover;
-                        song.textContent = songText;
-
-                        // Actualizar el título de la página
-                        document.title = `La Urban // Reproduciendo: ${songText}`;
-
-                        // Pasar información de la canción y la carátula al reproductor
-                        audio.setAttribute('title', songText);
-                        audio.setAttribute('poster', cover.src);
-                    } else {
-                        // Manejo de caso donde no se obtiene la información esperada
-                        cover.src = defaultCover;
-                        song.textContent = 'Artista - Canción';
-                        document.title = 'La Urban // Reproductor Light';
-                    }
-                })
-                .catch(error => console.error('Error al obtener la información de la canción:', error));
-        }
-
-        // Actualizar la información de la canción cada 30 segundos
-        setInterval(updateSongInfo, 30000);
-        // Llamar a la función una vez al cargar la página
-        updateSongInfo();
-    </script>
+    <script src="js/index.js"></script>
 </body>
 </html>

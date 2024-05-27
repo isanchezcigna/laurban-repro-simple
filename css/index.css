@@ -195,8 +195,26 @@ audio::-webkit-media-controls-fullscreen-button {
     color: white;
 }
 /* Media query para dispositivos con pantallas más pequeñas */
-@media (max-width: 1440px) {
+@media (max-height: 900px) {
+    body {
+        transform: scale(0.85);
+    }
+}
+
+@media (max-height: 800px) {
     body {
         transform: scale(0.8);
+    }
+}
+
+@media (max-height: 700px) {
+    body {
+        transform: scale(0.75);
+    }
+}
+
+@media (max-height: 600px) {
+    body {
+        transform: scale(0.7);
     }
 }

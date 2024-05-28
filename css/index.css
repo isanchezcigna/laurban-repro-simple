@@ -10,25 +10,24 @@ body {
     font-family: 'Lato', sans-serif;
     font-weight: 900;
     font-style: normal;
+    overflow: hidden; /* Evita el scroll en pantallas pequeñas */
 }
+
 body::before {
     content: '';
     position: fixed;
-    top: 300;
-    left: 300;
-    width: 200%;
-    height: 300%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-image: url('../img/background.png');
     background-repeat: repeat;
     background-size: auto;
-    background-position: center;
     opacity: 0.5;
-    transform: rotate(35deg);
-    overflow: hidden;
     pointer-events: none;
     z-index: -1;
-    animation: rainEffect 10s linear infinite;
-}
+} 
+/* Ajustes específicos para contenedores */
 .player-container {
     background: rgba(0, 0, 0, 0.7);
     padding: 20px;
@@ -38,6 +37,7 @@ body::before {
     width: 100%;
     text-align: center;
     position: relative;
+    margin: 10px; /* Añadir margen para evitar que se corte en pantallas pequeñas */
 }
 .logo {
     width: 100%;
@@ -60,6 +60,7 @@ body::before {
     70% {  transform: scale(1); }
     100% { transform: scale(0.95); }
 }
+
 .cover {
     width: 100%;
     border-radius: 10px;
@@ -195,31 +196,43 @@ audio::-webkit-media-controls-fullscreen-button {
     background-color: #1f1c2c; /* Fondo oscuro para el modal */
     color: white;
 }
-/* Media query para dispositivos con pantallas más pequeñas */
+/* Media queries para dispositivos con pantallas más pequeñas */
 @media (max-height: 900px) {
-    body {
-        overflow: hidden;
-        transform: scale(0.85);
+    .player-container {
+        padding: 15px;
+        max-width: 350px; /* Reducir el ancho máximo */
+    }
+    .logo {
+        margin-top: 10px; /* Añadir margen superior para evitar recorte */
     }
 }
 
 @media (max-height: 800px) {
-    body {
-        overflow: hidden;
-        transform: scale(0.8);
+    .player-container {
+        padding: 10px;
+        max-width: 300px; /* Reducir el ancho máximo */
+    }
+    .logo {
+        margin-top: 15px; /* Aumentar margen superior */
     }
 }
 
 @media (max-height: 700px) {
-    body {
-        overflow: hidden;
-        transform: scale(0.75);
+    .player-container {
+        padding: 5px;
+        max-width: 250px; /* Reducir el ancho máximo */
+    }
+    .logo {
+        margin-top: 20px; /* Aumentar margen superior */
     }
 }
 
 @media (max-height: 600px) {
-    body {
-        overflow: hidden;
-        transform: scale(0.7);
+    .player-container {
+        padding: 2px;
+        max-width: 200px; /* Reducir el ancho máximo */
+    }
+    .logo {
+        margin-top: 25px; /* Aumentar margen superior */
     }
 }

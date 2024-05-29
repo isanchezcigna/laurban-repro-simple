@@ -2,36 +2,36 @@ var audio = document.getElementById('audio');
 var playButton = document.getElementById('playButton');
 var overlay = document.getElementById('overlay');
 var logo = document.getElementById('logo');
-var hlsUrl = 'https://radio.laurban.cl/hls/laurban/live.m3u8';
-var mp3Url = 'https://radio.laurban.cl:8000/laurban.mp3';
+// var hlsUrl = 'https://radio.laurban.cl/hls/laurban/live.m3u8';
+var mp3Url = 'https://radio.laurban.cl/listen/laurban/high';
 
 function initializePlayer() {
-    if (Hls.isSupported()) {
-        var hls = new Hls();
-        hls.loadSource(hlsUrl);
-        hls.attachMedia(audio);
-        hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            audio.play().catch(error => {
-                console.error('Error al reproducir el audio:', error);
-            });
-        });
-    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-        // Para navegadores que soportan HLS nativamente (como Safari)
-        audio.src = hlsUrl;
-        audio.addEventListener('canplay', function() {
-            audio.play().catch(error => {
-                console.error('Error al reproducir el audio:', error);
-            });
-        });
-    } else {
-        // Si no es compatible, usar el flujo MP3
-        audio.src = mp3Url;
-        audio.addEventListener('canplay', function() {
-            audio.play().catch(error => {
-                console.error('Error al reproducir el audio:', error);
-            });
-        });
-    }
+    // if (Hls.isSupported()) {
+    //     var hls = new Hls();
+    //     hls.loadSource(hlsUrl);
+    //     hls.attachMedia(audio);
+    //     hls.on(Hls.Events.MANIFEST_PARSED, function() {
+    //         audio.play().catch(error => {
+    //             console.error('Error al reproducir el audio:', error);
+    //         });
+    //     });
+    // } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+    //     // Para navegadores que soportan HLS nativamente (como Safari)
+    //     audio.src = hlsUrl;
+    //     audio.addEventListener('canplay', function() {
+    //         audio.play().catch(error => {
+    //             console.error('Error al reproducir el audio:', error);
+    //         });
+    //     });
+    // } else {
+    // Si no es compatible, usar el flujo MP3
+    audio.src = mp3Url;
+    //audio.addEventListener('canplay', function() {
+    audio.play().catch(error => {
+        console.error('Error al reproducir el audio:', error);
+    });
+    //});
+    //}
     // Pasar información de la canción y la carátula
     audio.setAttribute('title', document.getElementById('song').textContent);
     audio.setAttribute('poster', document.getElementById('cover').src);

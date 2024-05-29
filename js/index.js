@@ -3,7 +3,7 @@ var playButton = document.getElementById('playButton');
 var overlay = document.getElementById('overlay');
 var logo = document.getElementById('logo');
 // var hlsUrl = 'https://radio.laurban.cl/hls/laurban/live.m3u8';
-var mp3Url = 'https://radio.laurban.cl/listen/laurban/high';
+var mp3Url = 'https://radio.laurban.cl/listen/laurban/aac';
 
 function initializePlayer() {
     // if (Hls.isSupported()) {

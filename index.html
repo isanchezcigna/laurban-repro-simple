@@ -25,7 +25,6 @@
     <meta property="og:locale:alternate" content="en_US">
     <meta property="og:locale:alternate" content="es_ES">
     <meta property="og:locale:alternate" content="es_LA">
-
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@laurban.cl">
     <meta name="twitter:creator" content="@laurban.cl">
@@ -33,8 +32,6 @@
     <meta name="twitter:description" content="La Urban es una emisora online que transmite música urbana las 24 horas del día.">
     <meta name="twitter:image" content="https://laurban.cl/img/android-chrome-512x512.png">
     <meta name="twitter:url" content="https://laurban.cl">
-    
-
 </head>
 <body>
     <div class="player-container">
@@ -47,7 +44,10 @@
                 <span id="song"></span>
             </div>
         </div>
-        <audio id="audio" controls controlsList="noplaybackrate" preload="none"></audio>
+        <audio id="audio" name="media" controls controlsList="noplaybackrate" preload="none">
+            <source src="https://radio.laurban.cl/listen/laurban/aac" type="audio/aac">
+            Tu navegador no soporta el elemento <code>audio</code>.
+        </audio>
         <div class="next-song-info">
             <div class="marquee">
                 <span id="next-song"></span>

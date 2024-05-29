@@ -3,7 +3,24 @@ var playButton = document.getElementById('playButton');
 var overlay = document.getElementById('overlay');
 var logo = document.getElementById('logo');
 // var hlsUrl = 'https://radio.laurban.cl/hls/laurban/live.m3u8';
-var mp3Url = 'https://radio.laurban.cl/listen/laurban/aac';
+// var mp3Url = 'https://radio.laurban.cl/listen/laurban/aac';
+
+// generar timeout antes de ejecutar la siguiente linea:
+setTimeout(() => {
+    if (audio.paused) {
+        playAudio();
+    }
+    if (!audio.paused) {
+        overlay.style.display = 'none';
+        logo.classList.add('active'); // Activar la animación del logo
+    }
+}, 3000);
+
+function playAudio() {
+    audio.play().catch(error => {
+        console.error('Error al reproducir el audio:', error);
+    });
+}
 
 function initializePlayer() {
     // if (Hls.isSupported()) {
@@ -25,16 +42,19 @@ function initializePlayer() {
     //     });
     // } else {
     // Si no es compatible, usar el flujo MP3
-    audio.src = mp3Url;
+    
     //audio.addEventListener('canplay', function() {
-    audio.play().catch(error => {
-        console.error('Error al reproducir el audio:', error);
-    });
+
+    // verificar si audio no está en play, darle play:
+    if (audio.paused) {
+        playAudio();
+        audio.setAttribute('title', document.getElementById('song').textContent);
+        audio.setAttribute('poster', document.getElementById('cover').src);
+    }
     //});
     //}
     // Pasar información de la canción y la carátula
-    audio.setAttribute('title', document.getElementById('song').textContent);
-    audio.setAttribute('poster', document.getElementById('cover').src);
+    
 }
 
 playButton.addEventListener('click', function() {

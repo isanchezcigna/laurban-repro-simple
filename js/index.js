@@ -14,6 +14,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function changeMediaData(data) {
+        if ('mediaSession' in navigator) {
+            const audioPlayer = document.getElementById('audioPlayer');
+            const albumArt = data.now_playing.song.art ? data.now_playing.song.art : 'https://radio.laurban.cl/api/station/laurban/art/842915e20ced6d034c60329bf797f1a4-1715584196.jpg';
+            // Configura los metadatos de la sesión de medios
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: data.now_playing.song.title,
+                artist: data.now_playing.song.artist,
+                album: data.now_playing.song.album,
+                artwork: [
+                    { src: albumArt, sizes: '96x96', type: 'image/jpeg' },
+                    { src: albumArt, sizes: '128x128', type: 'image/jpeg' },
+                    { src: albumArt, sizes: '192x192', type: 'image/jpeg' },
+                    { src: albumArt, sizes: '256x256', type: 'image/jpeg' },
+                    { src: albumArt, sizes: '384x384', type: 'image/jpeg' },
+                    { src: albumArt, sizes: '512x512', type: 'image/jpeg' },
+                ]
+            });
+
+            // Opcional: Configura los controles de la sesión de medios
+            navigator.mediaSession.setActionHandler('play', function () { audioPlayer.play(); });
+            navigator.mediaSession.setActionHandler('pause', function () { audioPlayer.pause(); });        }
+    }
+
     var audio = document.getElementById('audio');
     var playButton = document.getElementById('playButton');
     var overlay = document.getElementById('overlay');
@@ -95,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('https://radio.laurban.cl/api/nowplaying/laurban')
             .then(response => response.json())
             .then(data => {
-                console.log('Data:', data);
+                changeMediaData(data);
                 if (data.live.is_live) {
                     dynamicButton.href = "whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz";
                     buttonIcon.className = 'fab fa-whatsapp';
@@ -105,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     dynamicButton.href = "#"; // Evita que el enlace redirija
                     buttonIcon.className = 'fas fa-music';
                     buttonText.textContent = 'Pedir canción';
-                    dynamicButton.onclick = function(event) {
+                    dynamicButton.onclick = function (event) {
                         event.preventDefault(); // Previene la acción por defecto del enlace
                         musicRequestCanvas.classList.toggle('open');
                     };

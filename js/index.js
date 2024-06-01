@@ -69,6 +69,7 @@ function updateSongInfo() {
     fetch('https://radio.laurban.cl/api/nowplaying/laurban')
         .then(response => response.json())
         .then(data => {
+            console.log('Data:', data);
             var cover = document.getElementById('cover');
             var song = document.getElementById('song');
             var title = document.title;

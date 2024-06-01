@@ -1,5 +1,5 @@
 body {
-    background: linear-gradient(135deg, #f89200, #facc22);
+    background: linear-gradient(to bottom, #627d4d 0%,#1f3b08 100%);
     color: white;
     display: flex;
     flex-direction: column;
@@ -178,6 +178,24 @@ audio::-webkit-media-controls-fullscreen-button {
     top: 50%;
     transform: translate(-50%, -50%);
 }
+
+#musicRequestCanvas {
+    position: fixed;
+    right: -500px; /* Ajusta el valor según el ancho del canvas */
+    top: 0;
+    padding-top: 20px;
+    width: 500px; /* Ajusta el valor según el ancho del canvas */
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+    transition: right 0.3s ease;
+    z-index: 1000;
+}
+
+#musicRequestCanvas.open {
+    right: 0;
+}
+
 @keyframes move {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }

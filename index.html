@@ -58,12 +58,22 @@
         </div>
     </div>
 
-    <div class="btn-container">
+    <!-- <div class="btn-container">
         <button class="btn btn-primary-custom" data-toggle="modal" data-target="#requestModal"><i class="fas fa-music"></i> Pedir canción</button>
-    </div>
+    </div> -->
     <div class="btn-container">
-        <a class="btn btn-primary-custom" href="whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz"><i class="fab fa-whatsapp"></i> Escríbenos</a>
-        <a class="btn btn-primary-custom" href="https://instagram.com/laurban.cl" target="_blank"><i class="fab fa-instagram"></i> Síguenos</a>
+        <!-- <a class="btn btn-primary-custom" href="whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz">
+            <i class="fab fa-whatsapp"></i> 
+            <span>Escríbenos</span>
+        </a> -->
+        <a id="dynamicButton" class="btn btn-primary-custom" href="whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz">
+            <i id="buttonIcon" class="fab fa-whatsapp"></i> 
+            <span id="buttonText">Escríbenos</span>
+        </a>
+        <a class="btn btn-primary-custom" href="https://instagram.com/laurban.cl" target="_blank">
+            <i class="fab fa-instagram"></i> 
+            <span>Síguenos</span>
+        </a>
     </div>
 
     <div class="footer">
@@ -83,6 +93,21 @@
                     <iframe id="requestIframe" width="100%" height="600px" frameborder="0"></iframe>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="musicRequestCanvas" class="col">
+        <div class="d-flex justify-content-between px-4 py-1">
+            <h3>Pide tu canción</h3>
+            <button id="closeButton" onclick="closeCanvas();" class="btn btn-primary-custom" style="font-size: .9rem"><i class="fa fa-times"></i> </button>
+        </div>
+        <div class="container-fluid g-0 h-100">
+            <iframe 
+                src="https://radio.laurban.cl/public/laurban/embed-requests?theme=light" 
+                width="100%" 
+                height="90%"
+                style="border: none;"
+            ></iframe>
         </div>
     </div>
 

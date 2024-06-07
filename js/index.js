@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function changeMediaData(data) {
         if ('mediaSession' in navigator) {
-            const audioPlayer = document.getElementById('audioPlayer');
+            const audio = document.getElementById('audio');
             const albumArt = data.now_playing.song.art ? data.now_playing.song.art : 'https://laurban.cl/img/default.jpg';
             // Configura los metadatos de la sesión de medios
             navigator.mediaSession.metadata = new MediaMetadata({
@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             // Opcional: Configura los controles de la sesión de medios
-            navigator.mediaSession.setActionHandler('play', function () { audioPlayer.play(); });
-            navigator.mediaSession.setActionHandler('pause', function () { audioPlayer.pause(); });
-            navigator.mediaSession.setActionHandler('stop', function () { audioPlayer.pause(); });
+            navigator.mediaSession.setActionHandler('play', function () { audio.play(); });
+            navigator.mediaSession.setActionHandler('pause', function () { audio.pause(); });
+            navigator.mediaSession.setActionHandler('stop', function () { audio.pause(); });
         }
     }
 

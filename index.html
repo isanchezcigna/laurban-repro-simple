@@ -80,7 +80,7 @@
         <p>&copy; 2009 Radio Urban - 2024 La Urban</p>
     </div>
 
-    <div class="modal fade" id="requestModal" tabindex="-1" role="dialog" aria-labelledby="requestModalLabel" aria-hidden="true">
+    <!-- <div class="modal fade" id="requestModal" tabindex="-1" role="dialog" aria-labelledby="requestModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -94,16 +94,18 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <div id="musicRequestCanvas" class="col">
         <div class="d-flex justify-content-between px-4 py-1">
             <h3>Pide tu canción</h3>
-            <button id="closeButton" onclick="closeCanvas();" class="btn btn-primary-custom" style="font-size: .9rem"><i class="fa fa-times"></i> </button>
+            <button id="closeButton" class="btn btn-primary-custom" style="font-size: .9rem">
+                <i class="fa fa-times"></i>
+            </button>
         </div>
         <div class="container-fluid g-0 h-100">
             <iframe 
-                src="https://radio.laurban.cl/public/laurban/embed-requests?theme=light" 
+                id="requestIframe"
                 width="100%" 
                 height="90%"
                 style="border: none;"

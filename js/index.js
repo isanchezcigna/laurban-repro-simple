@@ -7,8 +7,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const buttonIcon = document.getElementById('buttonIcon');
     const buttonText = document.getElementById('buttonText');
     const musicRequestCanvas = document.getElementById('musicRequestCanvas');
+    const requestIframe = document.getElementById('requestIframe');
+    const closeButton = document.getElementById('closeButton');
     const defaultTitle = 'La Urban · Emisora Online';
     const defaultCover = 'https://laurban.cl/img/default.jpg';
+    let iframeLoaded = false;
+    let userPaused = false;
+    let retryCount = 0;
 
     function setThemeByTime() {
         const hour = new Date().getHours();
@@ -21,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if ('mediaSession' in navigator) {
             const albumArt = data.now_playing.song.art || defaultCover;
             navigator.mediaSession.metadata = new MediaMetadata({
-                title: data.now_playing.song.title,
+                title: `La Urban: ${data.now_playing.song.title}`,
                 artist: data.now_playing.song.artist,
                 album: data.now_playing.song.album,
                 artwork: [
@@ -34,14 +39,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 ]
             });
 
-            navigator.mediaSession.setActionHandler('play', () => audio.play());
-            navigator.mediaSession.setActionHandler('pause', () => audio.pause());
-            navigator.mediaSession.setActionHandler('stop', () => audio.pause());
+            navigator.mediaSession.setActionHandler('play', () => playAudio());
+            navigator.mediaSession.setActionHandler('pause', () => pauseAudio());
+            navigator.mediaSession.setActionHandler('stop', () => pauseAudio());
         }
     }
 
     function playAudio() {
+        audio.src = 'https://radio.laurban.cl/listen/laurban/media';
         audio.play().catch(error => console.error('Error al reproducir el audio:', error));
+    }
+
+    function pauseAudio() {
+        audio.pause();
+        userPaused = true;
     }
 
     function initializePlayer() {
@@ -68,10 +79,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 : "#";
             buttonIcon.className = isLive ? 'fab fa-whatsapp' : 'fas fa-music';
             buttonText.textContent = isLive ? 'Escríbenos' : 'Pedir canción';
-            dynamicButton.onclick = isLive ? null : (event) => {
-                event.preventDefault();
-                musicRequestCanvas.classList.toggle('open');
-            };
+
+            if (isLive) {
+                dynamicButton.onclick = null;
+            } else {
+                dynamicButton.onclick = (event) => {
+                    event.preventDefault();
+                    if (!iframeLoaded) {
+                        buttonText.textContent = 'Cargando...';
+                        dynamicButton.disabled = true;
+                        requestIframe.onload = () => {
+                            musicRequestCanvas.classList.add('open');
+                            buttonText.textContent = 'Pedir canción';
+                            dynamicButton.disabled = false;
+                            iframeLoaded = true;
+                        };
+                        requestIframe.src = 'https://radio.laurban.cl/public/laurban/embed-requests?theme=dark';
+                    } else {
+                        musicRequestCanvas.classList.toggle('open');
+                    }
+                };
+            }
 
             const cover = document.getElementById('cover');
             const song = document.getElementById('song');
@@ -113,6 +141,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function retryPlayAudio() {
+        if (!userPaused && audio.paused) {
+            if (retryCount < 3) {
+                setTimeout(() => {
+                    playAudio();
+                    retryCount++;
+                    retryPlayAudio();
+                }, 20000); // 20 segundos entre cada intento
+            } else {
+                setTimeout(() => {
+                    location.reload();
+                }, 15000); // Recargar la página después de 15 segundos
+            }
+        }
+    }
+
     playButton.addEventListener('click', () => {
         initializePlayer();
         overlay.style.display = 'none';
@@ -133,10 +177,27 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(updateSongInfo, 30000);
     updateSongInfo();
 
-    $('#requestModal').on('shown.bs.modal', function () {
-        const iframe = document.getElementById('requestIframe');
-        if (!iframe.src) {
-            iframe.src = 'https://radio.laurban.cl/public/laurban/embed-requests?theme=dark';
+    closeButton.addEventListener('click', () => {
+        musicRequestCanvas.classList.remove('open');
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!musicRequestCanvas.contains(event.target) && !dynamicButton.contains(event.target)) {
+            musicRequestCanvas.classList.remove('open');
+        }
+    });
+
+    // Sincronizar con la transmisión en vivo al pausar y reanudar
+    audio.addEventListener('pause', () => {
+        if (!userPaused) {
+            retryPlayAudio();
+        }
+    });
+
+    audio.addEventListener('play', () => {
+        if (userPaused) {
+            playAudio();
+            userPaused = false;
         }
     });
 });

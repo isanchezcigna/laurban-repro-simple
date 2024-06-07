@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function changeMediaData(data) {
         if ('mediaSession' in navigator) {
             const audioPlayer = document.getElementById('audioPlayer');
-            const albumArt = data.now_playing.song.art ? data.now_playing.song.art : 'https://radio.laurban.cl/api/station/laurban/art/842915e20ced6d034c60329bf797f1a4-1715584196.jpg';
+            const albumArt = data.now_playing.song.art ? data.now_playing.song.art : 'https://laurban.cl/img/default.jpg';
             // Configura los metadatos de la sesión de medios
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: data.now_playing.song.title,
@@ -35,7 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Opcional: Configura los controles de la sesión de medios
             navigator.mediaSession.setActionHandler('play', function () { audioPlayer.play(); });
-            navigator.mediaSession.setActionHandler('pause', function () { audioPlayer.pause(); });        }
+            navigator.mediaSession.setActionHandler('pause', function () { audioPlayer.pause(); });
+            navigator.mediaSession.setActionHandler('stop', function () { audioPlayer.pause(); });
+        }
     }
 
     var audio = document.getElementById('audio');
@@ -114,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     function updateSongInfo() {
-        const defaultCover = 'https://radio.laurban.cl/api/station/laurban/art/842915e20ced6d034c60329bf797f1a4-1715584196.jpg';
+        const defaultCover = 'https://laurban.cl/img/default.jpg';
         setThemeByTime();
         fetch('https://radio.laurban.cl/api/nowplaying/laurban')
             .then(response => response.json())

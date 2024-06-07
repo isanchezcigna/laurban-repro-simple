@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => console.error('Error al obtener la información de la canción:', error)); */
-    }
+    //}
 
     // Actualizar la información de la canción cada 30 segundos
     setInterval(updateSongInfo, 30000);

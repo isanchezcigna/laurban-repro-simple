@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Urban · Emisora Online</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="manifest" href="site.webmanifest">
+    <meta name="description" content="La Urban es una radio online que transmite música urbana las 24 horas del día.">
+    <meta name="keywords" content="radio, online, música, urbana, reggaeton, trap, rap, hip hop, la urban">
+    <meta name="author" content="La Urban">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:title" content="La Urban · Emisora Online">
+    <meta property="og:description" content="La Urban es una emisora online que transmite música urbana las 24 horas del día.">
+    <meta property="og:image" content="https://laurban.cl/img/android-chrome-512x512.png">
+    <meta property="og:url" content="https://laurban.cl">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="La Urban">
+    <meta property="og:locale" content="es_CL">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:locale:alternate" content="es_ES">
+    <meta property="og:locale:alternate" content="es_LA">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@laurban.cl">
+    <meta name="twitter:creator" content="@laurban.cl">
+    <meta name="twitter:title" content="La Urban · Emisora Online">
+    <meta name="twitter:description" content="La Urban es una emisora online que transmite música urbana las 24 horas del día.">
+    <meta name="twitter:image" content="https://laurban.cl/img/android-chrome-512x512.png">
+    <meta name="twitter:url" content="https://laurban.cl">
+</head>
+<body>
+    <div class="player-container">
+        <img src="img/logo.png" alt="Logo" class="logo" id="logo">
+        <div class="cover-container">
+            <img id="cover" src="https://laurban.cl/img/default.jpg" alt="Carátula del Álbum" class="cover">
+        </div>
+        <div class="song-info">
+            <div class="marquee">
+                <span id="song"></span>
+            </div>
+        </div>
+        <audio id="audio" name="media" controls controlsList="noplaybackrate nodownload" preload="none">
+            <source src="https://radio.laurban.cl/listen/laurban/media" type="audio/aac">
+            Tu navegador no soporta el elemento <code>audio</code>.
+        </audio>
+        <div class="next-song-info">
+            <div class="marquee">
+                <span id="next-song"></span>
+            </div>
+        </div>
+        <div class="overlay" id="overlay">
+            <button id="playButton" class="play-button"><i class="fas fa-play"></i></button>
+        </div>
+    </div>
+
+    <!-- <div class="btn-container">
+        <button class="btn btn-primary-custom" data-toggle="modal" data-target="#requestModal"><i class="fas fa-music"></i> Pedir canción</button>
+    </div> -->
+    <div class="btn-container">
+        <!-- <a class="btn btn-primary-custom" href="whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz">
+            <i class="fab fa-whatsapp"></i> 
+            <span>Escríbenos</span>
+        </a> -->
+        <a id="dynamicButton" class="btn btn-primary-custom" href="whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz">
+            <i id="buttonIcon" class="fab fa-whatsapp"></i> 
+            <span id="buttonText">Escríbenos</span>
+        </a>
+        <a class="btn btn-primary-custom" href="https://instagram.com/laurban.cl" target="_blank">
+            <i class="fab fa-instagram"></i> 
+            <span>Síguenos</span>
+        </a>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2009 Radio Urban - 2024 La Urban</p>
+    </div>
+
+    <!-- <div class="modal fade" id="requestModal" tabindex="-1" role="dialog" aria-labelledby="requestModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="requestModalLabel">Pedir Canción</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <iframe id="requestIframe" width="100%" height="600px" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+    <div id="musicRequestCanvas" class="col">
+        <div class="d-flex justify-content-between px-4 py-1">
+            <h3>Pide tu canción</h3>
+            <button id="closeButton" class="btn btn-primary-custom" style="font-size: .9rem">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="container-fluid g-0 h-100">
+            <iframe 
+                id="requestIframe"
+                width="100%" 
+                height="90%"
+                style="border: none;"
+            ></iframe>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script> -->
+    <script src="index.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+#player {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#current-song {
+    margin-top: 10px;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+#lyrics {
+    margin-top: 20px;
+    font-size: 1.2em;
+    white-space: pre-wrap;
+}

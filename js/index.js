@@ -101,43 +101,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
             }
 
-            const cover = document.getElementById('cover');
-            const song = document.getElementById('song');
-            const title = document.title;
-
-            if (data.now_playing && data.now_playing.song) {
-                const { artist, title: songTitle, art } = data.now_playing.song;
-                const [mainArtist, ...extraArtists] = artist.split(';').map(part => part.trim());
-                const extraArtistsText = extraArtists.join(', ');
-                const songName = extraArtistsText && !songTitle.includes(extraArtistsText)
-                    ? `${songTitle} (feat. ${extraArtistsText})`
-                    : songTitle;
-                const songText = `Escuchas: ${mainArtist} - ${songName}`;
-
-                cover.src = art || defaultCover;
-                song.textContent = songText;
-                document.title = `La Urban · Reproduciendo: ${mainArtist} - ${songName}`;
-                audio.setAttribute('title', songText);
-                audio.setAttribute('poster', cover.src);
-            } else {
-                cover.src = defaultCover;
-                song.textContent = defaultTitle;
-                document.title = defaultTitle;
-            }
-
-            const nextSong = document.getElementById('next-song');
             if (isLive) {
-                nextSong.textContent = '¡Estamos en vivo!';
-            } else if (data.playing_next && data.playing_next.song) {
-                const { artist, title: nextTitle } = data.playing_next.song;
-                const [mainArtist, extraArtist] = artist.split(';').map(part => part.trim());
-                const nextSongName = extraArtist && !nextTitle.includes(extraArtist)
-                    ? `${nextTitle} (feat. ${extraArtist})`
-                    : nextTitle;
-                nextSong.textContent = `Ya viene: ${mainArtist} - ${nextSongName}`;
+                var livename = `En vivo: ${data.live.streamer_name}` || '¡En Vivo!';
+                var liveart = data.live.art || defaultCover;
+                var livetitle = `La Urban · ${livename}`
+
+                song.textContent = livename; // setea el nombre del programa
+                cover.src = liveart; // setea la imagen del programa
+                document.title = livetitle; // setea el titulo de la pagina
             } else {
-                nextSong.textContent = defaultTitle;
+                if (data.now_playing && data.now_playing.song) {
+                    const { artist, title: songTitle, art } = data.now_playing.song;
+                    const [mainArtist, ...extraArtists] = artist.split(';').map(part => part.trim());
+                    const extraArtistsText = extraArtists.join(', ');
+                    const songName = extraArtistsText && !songTitle.includes(extraArtistsText)
+                        ? `${songTitle} (feat. ${extraArtistsText})`
+                        : songTitle;
+                    const songText = `Escuchas: ${mainArtist} - ${songName}`;
+    
+                    cover.src = art || defaultCover;
+                    song.textContent = songText;
+                    document.title = `La Urban · Reproduciendo: ${mainArtist} - ${songName}`;
+                    audio.setAttribute('title', songText);
+                    audio.setAttribute('poster', cover.src);
+                } else {
+                    cover.src = defaultCover;
+                    song.textContent = defaultTitle;
+                    document.title = defaultTitle;
+                }
             }
+
+            
+
+            // const nextSong = document.getElementById('next-song');
+            // if (isLive) {
+            //     nextSong.textContent = '¡Estamos en vivo!';
+            // } else if (data.playing_next && data.playing_next.song) {
+            //     const { artist, title: nextTitle } = data.playing_next.song;
+            //     const [mainArtist, extraArtist] = artist.split(';').map(part => part.trim());
+            //     const nextSongName = extraArtist && !nextTitle.includes(extraArtist)
+            //         ? `${nextTitle} (feat. ${extraArtist})`
+            //         : nextTitle;
+            //     nextSong.textContent = `Ya viene: ${mainArtist} - ${nextSongName}`;
+            // } else {
+            //     nextSong.textContent = defaultTitle;
+            // }
         });
     }
 

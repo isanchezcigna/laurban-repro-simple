@@ -1,131 +1,159 @@
 body {
-    background: linear-gradient(to bottom, #627d4d 0%,#1f3b08 100%);
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    font-family: 'Lato', sans-serif;
-    font-weight: 900;
-    font-style: normal;
-    overflow: hidden; /* Evita el scroll en pantallas pequeñas */
+	color: white;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+	margin: 0;
+	font-family: "Lato", sans-serif;
+	font-weight: 900;
+	font-style: normal;
+	overflow: hidden; /* Evita el scroll en pantallas pequeñas */
 }
 
-body::before {
+.gradient-background {
+	background: linear-gradient(155deg,#db0358,#7a837e,#eed05b,#f0be6b);
+	background-size: 240% 240%;
+	animation: gradient-animation 8s ease infinite;
+  }
+  
+  @keyframes gradient-animation {
+	0% {
+	  background-position: 0% 50%;
+	}
+	50% {
+	  background-position: 100% 50%;
+	}
+	100% {
+	  background-position: 0% 50%;
+	}
+  }
+
+/* body::before {
     content: '';
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('../img/background.png');
-    background-repeat: repeat;
-    background-size: auto;
     opacity: 0.5;
     pointer-events: none;
     z-index: -1;
-} 
+}  */
 /* Ajustes específicos para contenedores */
 .player-container {
-    background: rgba(0, 0, 0, 0.7);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    max-width: 400px;
-    width: 100%;
-    text-align: center;
-    position: relative;
-    margin: 10px; /* Añadir margen para evitar que se corte en pantallas pequeñas */
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  margin: 10px; /* Añadir margen para evitar que se corte en pantallas pequeñas */
 }
 .logo {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    margin-bottom: 10px;
-    transition: all 0.3s ease-in-out;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+  transition: all 0.3s ease-in-out;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 .logo.active {
-    animation: colorChange 1s infinite alternate;
-    animation: pulse 0.8s infinite;
+  animation: colorChange 3s infinite alternate;
+  /*animation: pulse 1s infinite;*/
 }
 @keyframes colorChange {
-    0% { filter: hue-rotate(0deg); }
-    100% { filter: hue-rotate(360deg); }
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
 }
 @keyframes pulse {
-    0% {  transform: scale(0.95);  }
-    70% {  transform: scale(1); }
-    100% { transform: scale(0.95); }
+  0% {
+    transform: scale(0.95);
+  }
+  70% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.95);
+  }
 }
 
 .cover {
-    width: 100%;
-    border-radius: 10px;
-    padding-top: 10px;
+  width: 100%;
+  border-radius: 10px;
+  padding-top: 10px;
 }
 .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 10px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
 }
 .play-button {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 3rem;
-    cursor: pointer;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 3rem;
+  cursor: pointer;
 }
 audio {
-    width: 100%;
-    height: 40px;
-    margin-top: 10px;
-    border-radius: 10px;
+  width: 100%;
+  height: 40px;
+  margin-top: 10px;
+  border-radius: 10px;
 }
 .song-info {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 .next-song-info {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 .marquee {
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 .marquee span {
-    display: inline-block;
-    padding-left: 100%;
-    animation: marquee 15s linear infinite;
-    text-shadow: 2px 2px 4px #000000;
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 15s linear infinite;
+  text-shadow: 2px 2px 4px #000000;
 }
 @keyframes marquee {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-100%, 0); }
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-100%, 0);
+  }
 }
 #artist {
-    font-size: 1.2rem; /* Nombre del artista un poco más grande */
+  font-size: 1.2rem; /* Nombre del artista un poco más grande */
 }
 audio::-webkit-media-controls-panel {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 audio::-webkit-media-controls-play-button,
 audio::-webkit-media-controls-pause-button,
 audio::-webkit-media-controls-mute-button,
 audio::-webkit-media-controls-unmute-button,
 audio::-webkit-media-controls-volume-slider {
-    display: block !important;
+  display: block !important;
 }
 audio::-webkit-media-controls-current-time-display,
 audio::-webkit-media-controls-time-remaining-display,
@@ -134,123 +162,134 @@ audio::-webkit-media-controls-seek-back-button,
 audio::-webkit-media-controls-seek-forward-button,
 audio::-webkit-media-controls-playback-rate-button,
 audio::-webkit-media-controls-fullscreen-button {
-    display: none;
+  display: none;
 }
 .btn {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5)
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 .btn-container {
-    margin-top: 20px;
-    display: flex;
-    justify-content: space-around;
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
 }
-.btn-container a, .btn-container button {
-    color: white;
-    font-size: 1.2rem; /* Ajustar el tamaño de los íconos */
-    margin: 0 10px; /* Separar los íconos */
-    text-shadow: 1px 1px 2px #000000;
+.btn-container a,
+.btn-container button {
+  color: white;
+  font-size: 1.2rem; /* Ajustar el tamaño de los íconos */
+  margin: 0 10px; /* Separar los íconos */
+  text-shadow: 1px 1px 2px #000000;
 }
 .icon-class {
-    font-size: 1.8rem; /* Ajustar el tamaño de los íconos */
+  font-size: 1.8rem; /* Ajustar el tamaño de los íconos */
 }
 .btn-primary-custom {
-    background-color: rgba(0, 0, 0, 0.7);
-    border: none;
-    color: white;
-    font-size: 1.2rem; /* Ajustar el tamaño del botón */
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: background 0.3s ease-in-out;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: white;
+  font-size: 1.2rem; /* Ajustar el tamaño del botón */
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s ease-in-out;
 }
 .btn-primary-custom:hover {
-    background: linear-gradient(90deg, hsla(33, 100%, 53%, 1) 0%, hsla(58, 100%, 68%, 1) 100%);
-    color: white;
-    animation: colorChange 1s infinite;
+  /* background: linear-gradient(
+    90deg,
+    hsla(33, 100%, 53%, 1) 0%,
+    hsla(58, 100%, 68%, 1) 100%
+  ); */
+  color: #FDF349;
+	/*animation: colorChange 1s infinite;*/
 }
 .btn-primary-custom:hover::before {
-    font-family: 'Font Awesome 5 Free';
-    font-weight: 900;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 #musicRequestCanvas {
-    position: fixed;
-    right: -500px; /* Ajusta el valor según el ancho del canvas */
-    top: 0;
-    padding-top: 20px;
-    width: 500px; /* Ajusta el valor según el ancho del canvas */
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    box-shadow: -2px 0 5px rgba(0,0,0,0.5);
-    transition: right 0.3s ease;
-    z-index: 1000;
+  position: fixed;
+  right: -500px; /* Ajusta el valor según el ancho del canvas */
+  top: 0;
+  padding-top: 20px;
+  width: 500px; /* Ajusta el valor según el ancho del canvas */
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+  transition: right 0.3s ease;
+  z-index: 1000;
 }
 
 #musicRequestCanvas.open {
-    right: 0;
+  right: 0;
 }
 
 @keyframes move {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 .footer {
-    margin-top: 20px;
-    text-align: center;
-    text-shadow: 2px 2px 4px #000000;
+  margin-top: 20px;
+  text-align: center;
+  text-shadow: 2px 2px 4px #000000;
 }
 .modal-body {
-    min-height: 550px; /* Mínimo de alto para el cuerpo del modal */
-    height: auto;
+  min-height: 550px; /* Mínimo de alto para el cuerpo del modal */
+  height: auto;
 }
 .modal-content {
-    background-color: #1f1c2c; /* Fondo oscuro para el modal */
-    color: white;
+  background-color: #1f1c2c; /* Fondo oscuro para el modal */
+  color: white;
 }
 /* Media queries para dispositivos con pantallas más pequeñas */
 @media (max-height: 900px) {
-    .player-container {
-        padding: 15px;
-        max-width: 350px; /* Reducir el ancho máximo */
-    }
-    .logo {
-        margin-top: 10px; /* Añadir margen superior para evitar recorte */
-    }
+  .player-container {
+    padding: 15px;
+    max-width: 350px; /* Reducir el ancho máximo */
+  }
+  .logo {
+    margin-top: 10px; /* Añadir margen superior para evitar recorte */
+  }
 }
 
 @media (max-height: 800px) {
-    .player-container {
-        padding: 10px;
-        max-width: 300px; /* Reducir el ancho máximo */
-    }
-    .logo {
-        margin-top: 15px; /* Aumentar margen superior */
-    }
+  .player-container {
+    padding: 10px;
+    max-width: 300px; /* Reducir el ancho máximo */
+  }
+  .logo {
+    margin-top: 15px; /* Aumentar margen superior */
+  }
 }
 
 @media (max-height: 700px) {
-    .player-container {
-        padding: 5px;
-        max-width: 250px; /* Reducir el ancho máximo */
-    }
-    .logo {
-        margin-top: 20px; /* Aumentar margen superior */
-    }
+  .player-container {
+    padding: 5px;
+    max-width: 250px; /* Reducir el ancho máximo */
+  }
+  .logo {
+    margin-top: 20px; /* Aumentar margen superior */
+  }
 }
 
 @media (max-height: 600px) {
-    .player-container {
-        padding: 2px;
-        max-width: 200px; /* Reducir el ancho máximo */
-    }
-    .logo {
-        margin-top: 25px; /* Aumentar margen superior */
-    }
+  .player-container {
+    padding: 2px;
+    max-width: 200px; /* Reducir el ancho máximo */
+  }
+  .logo {
+    margin-top: 25px; /* Aumentar margen superior */
+  }
 }

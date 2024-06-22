@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const musicRequestCanvas = document.getElementById('musicRequestCanvas');
     const requestIframe = document.getElementById('requestIframe');
     const closeButton = document.getElementById('closeButton');
-    const defaultTitle = 'La Urban · Emisora Online';
-    const defaultCover = 'https://laurban.cl/img/default.jpg';
+    const defaultTitle = 'Radio La Mejor · 92.5';
+    const defaultCover = 'https://radiolamejor.cl/img/default.jpg';
     let iframeLoaded = false;
     let userPaused = false;
     let retryCount = 0;
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if ('mediaSession' in navigator) {
             const albumArt = data.now_playing.song.art || defaultCover;
             navigator.mediaSession.metadata = new MediaMetadata({
-                title: `La Urban: ${data.now_playing.song.title}`,
+                title: `Radio La Mejor: ${data.now_playing.song.title}`,
                 artist: data.now_playing.song.artist,
                 album: data.now_playing.song.album,
                 artwork: [
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function playAudio() {
-        audio.src = 'https://radio.laurban.cl/listen/laurban/media';
+        audio.src = 'https://radio.radiolamejor.cl/listen/lamejor/media';
         audio.play().catch(error => console.error('Error al reproducir el audio:', error));
     }
 
@@ -64,18 +64,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getRadioData() {
-        return fetch('https://radio.laurban.cl/api/nowplaying/laurban')
+        return fetch('https://radio.radiolamejor.cl/api/nowplaying/lamejor')
             .then(response => response.json())
             .catch(error => console.error('Error al obtener la información de la canción:', error));
     }
 
     function updateSongInfo() {
-        setThemeByTime();
+        //setThemeByTime();
         getRadioData().then(data => {
             changeMediaData(data);
+            console.log(data)
             const isLive = data.live.is_live;
             dynamicButton.href = isLive
-                ? "whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz"
+                ? "whatsapp://send/?phone=+56997749199&abid=+56997749199&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz"
                 : "#";
             buttonIcon.className = isLive ? 'fab fa-whatsapp' : 'fas fa-music';
             buttonText.textContent = isLive ? 'Escríbenos' : 'Pedir canción';
@@ -94,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             dynamicButton.disabled = false;
                             iframeLoaded = true;
                         };
-                        requestIframe.src = 'https://radio.laurban.cl/public/laurban/embed-requests?theme=dark';
+                        requestIframe.src = 'https://radio.radiolamejor.cl/public/lamejor/embed-requests?theme=dark';
                     } else {
                         musicRequestCanvas.classList.toggle('open');
                     }
@@ -102,9 +103,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (isLive) {
-                var livename = `En vivo: ${data.live.streamer_name}` || '¡En Vivo!';
+                var livename = 'Radio La Mejor 92.5 FM // Marchigue, Sexta Región de Chile';
                 var liveart = data.live.art || defaultCover;
-                var livetitle = `La Urban · ${livename}`
+                var livetitle = `Radio La Mejor · ${livename}`
 
                 song.textContent = livename; // setea el nombre del programa
                 cover.src = liveart; // setea la imagen del programa
@@ -121,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
                     cover.src = art || defaultCover;
                     song.textContent = songText;
-                    document.title = `La Urban · Reproduciendo: ${mainArtist} - ${songName}`;
+                    document.title = `Radio La Mejor · Reproduciendo: ${mainArtist} - ${songName}`;
                     audio.setAttribute('title', songText);
                     audio.setAttribute('poster', cover.src);
                 } else {

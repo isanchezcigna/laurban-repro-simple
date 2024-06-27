@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function playAudio() {
-        audio.src = 'https://radio.laurban.cl/listen/laurban/media';
+        audio.src = 'https://radio.laurban.cl:8000/media';
         audio.play().catch(error => console.error('Error al reproducir el audio:', error));
     }
 

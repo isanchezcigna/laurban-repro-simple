@@ -204,6 +204,23 @@ audio::-webkit-media-controls-fullscreen-button {
     right: 0;
 }
 
+#chatCanvas {
+    position: fixed;
+    left: -500px; /* Ajusta el valor según el ancho del canvas */
+    top: 0;
+    padding-top: 20px;
+    width: 500px; /* Ajusta el valor según el ancho del canvas */
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+    transition: left 0.3s ease;
+    z-index: 1000;
+}
+
+#chatCanvas.open {
+    left: 0;
+}
+
 @keyframes move {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -213,6 +230,18 @@ audio::-webkit-media-controls-fullscreen-button {
     margin-top: 20px;
     text-align: center;
     text-shadow: 2px 2px 4px #000000;
+}
+.rrss {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    font-size: 2rem;
+    gap: 20px;
+    /* cambiar color texto a orange */
+    .icon {
+        color: orange;
+        animation: colorChange 1s infinite alternate
+    }
 }
 .modal-body {
     min-height: 550px; /* Mínimo de alto para el cuerpo del modal */

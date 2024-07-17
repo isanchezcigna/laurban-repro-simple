@@ -4,24 +4,49 @@ document.addEventListener('DOMContentLoaded', function () {
     const overlay = document.getElementById('overlay');
     const logo = document.getElementById('logo');
     const dynamicButton = document.getElementById('dynamicButton');
+    const dynamicCanvas = document.getElementById('dynamicCanvas');
     const buttonIcon = document.getElementById('buttonIcon');
     const buttonText = document.getElementById('buttonText');
+    const button2Icon = document.getElementById('button2Icon');
+    const button2Text = document.getElementById('button2Text');
     const musicRequestCanvas = document.getElementById('musicRequestCanvas');
+    const chatCanvas = document.getElementById('chatCanvas');
     const requestIframe = document.getElementById('requestIframe');
+    const newRequestFrame = document.getElementById('newRequestFrame');
     const closeButton = document.getElementById('closeButton');
     const defaultTitle = 'La Urban · Emisora Online';
     const defaultCover = 'https://laurban.cl/img/default.jpg';
     let isKickLive = false;
     let showingKickVideo = false;
     let iframeLoaded = false;
+    let iframe2Loaedad = false;
     let userPaused = false;
-    // let retryCount = 0;
+    let retryCount = 0;
 
     function setThemeByTime() {
         const hour = new Date().getHours();
         document.body.style.background = hour >= 6 && hour < 18
             ? 'linear-gradient(135deg, #f89200, #facc22)'
             : 'linear-gradient(to bottom, rgba(2,7,29) 0%,rgb(8, 30, 77) 100%)';
+    }
+
+    function enableCanvas() {
+        dynamicCanvas.onclick = (event) => {
+            event.preventDefault();
+            if (!iframe2Loaedad) {
+                button2Text.textContent = 'Cargando...';
+                dynamicCanvas.disabled = true;
+                newRequestFrame.onload = () => {
+                    chatCanvas.classList.add('open');
+                    button2Text.textContent = 'Chat en vivo';
+                    dynamicCanvas.disabled = false;
+                    iframe2Loaedad = true;
+                };
+                newRequestFrame.src = 'https://www3.cbox.ws/box/?boxid=3539409&boxtag=Q2vpWH';
+            } else {
+                chatCanvas.classList.toggle('open');
+            }
+        };
     }
 
     function changeMediaData(data, coverUpdate = false) {
@@ -114,6 +139,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function updateSongInfo() {
         setThemeByTime();
+        retryPlayAudio();
+        enableCanvas();
         try {
             const [radioData, kickLive] = await Promise.all([getRadioData(), getKickLiveInfo()]);
 
@@ -157,25 +184,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 changeMediaData(radioData, true);
                 if (!showingKickVideo) {
                     showingKickVideo = true;
-                    dynamicButton.href = "#"
-                    buttonIcon.className = 'fas fa-comment-dots';
-                    buttonText.textContent = 'Chat en vivo';
-                    dynamicButton.onclick = (event) => {
-                        event.preventDefault();
-                        if (!iframeLoaded) {
-                            buttonText.textContent = 'Cargando...';
-                            dynamicButton.disabled = true;
-                            requestIframe.onload = () => {
-                                musicRequestCanvas.classList.add('open');
-                                buttonText.textContent = 'Chat en vivo';
-                                dynamicButton.disabled = false;
-                                iframeLoaded = true;
-                            };
-                            requestIframe.src = 'https://kick.com/laurban/chatroom';
-                        } else {
-                            musicRequestCanvas.classList.toggle('open');
-                        }
-                    };
                     showKickVideo();
                 }
             } else {
@@ -230,21 +238,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // function retryPlayAudio() {
-    //     if (!userPaused && audio.paused) {
-    //         if (retryCount < 3) {
-    //             setTimeout(() => {
-    //                 playAudio();
-    //                 retryCount++;
-    //                 retryPlayAudio();
-    //             }, 20000); // 20 segundos entre cada intento
-    //         } else {
-    //             setTimeout(() => {
-    //                 location.reload();
-    //             }, 15000); // Recargar la página después de 15 segundos
-    //         }
-    //     }
-    // }
+    function retryPlayAudio() {
+        if (!userPaused && audio.paused) {
+            if (retryCount < 3) {
+                setTimeout(() => {
+                    playAudio();
+                    retryCount++;
+                    retryPlayAudio();
+                }, 20000); // 20 segundos entre cada intento
+            } else {
+                setTimeout(() => {
+                    location.reload();
+                }, 15000); // Recargar la página después de 15 segundos
+            }
+        }
+    }
 
     playButton.addEventListener('click', () => {
         updateSongInfo();
@@ -268,11 +276,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     closeButton.addEventListener('click', () => {
         musicRequestCanvas.classList.remove('open');
+        chatCanvas.classList.remove('open');
     });
 
     document.addEventListener('click', (event) => {
         if (!musicRequestCanvas.contains(event.target) && !dynamicButton.contains(event.target)) {
             musicRequestCanvas.classList.remove('open');
+        }
+        if (!chatCanvas.contains(event.target) && !dynamicCanvas.contains(event.target)) {
+            chatCanvas.classList.remove('open');
         }
     });
 

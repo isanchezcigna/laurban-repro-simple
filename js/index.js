@@ -276,6 +276,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     closeButton.addEventListener('click', () => {
         musicRequestCanvas.classList.remove('open');
+    });
+    
+    close2Button.addEventListener('click', () => {
         chatCanvas.classList.remove('open');
     });
 

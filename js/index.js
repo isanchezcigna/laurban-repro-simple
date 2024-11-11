@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getRadioData() {
-        return fetch('https://radio.laurban.cl/api/nowplaying/la_urban')
+        return fetch('https://radio.laurban.cl/api/nowplaying/laurban')
             .then(response => response.json())
             .catch(error => console.error('Error al obtener la información de la canción:', error));
     }
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 dynamicButton.disabled = false;
                                 iframeLoaded = true;
                             };
-                            requestIframe.src = 'https://radio.laurban.cl/public/la_urban/embed-requests?theme=dark';
+                            requestIframe.src = 'https://radio.laurban.cl/public/laurban/embed-requests?theme=dark';
                         } else {
                             musicRequestCanvas.classList.toggle('open');
                         }

@@ -50,8 +50,8 @@ body::before {
     transition: max-width 0.5s ease;
 }
 .logo.active {
-    animation: colorChange 1s infinite alternate;
-    animation: pulse 0.8s infinite;
+    animation: pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    will-change: transform;
 }
 @keyframes colorChange {
     0% { filter: hue-rotate(0deg); }
@@ -95,6 +95,7 @@ audio {
     height: 40px;
     margin-top: 10px;
     border-radius: 10px;
+    will-change: contents;
 }
 .song-info {
     margin-top: 10px;
@@ -113,6 +114,7 @@ audio {
     padding-left: 100%;
     animation: marquee 15s linear infinite;
     text-shadow: 2px 2px 4px #000000;
+    will-change: transform;
 }
 @keyframes marquee {
     0% { transform: translate(0, 0); }
@@ -179,7 +181,7 @@ audio::-webkit-media-controls-fullscreen-button {
     animation: colorChange 1s infinite;
 }
 .btn-primary-custom:hover::before {
-    font-family: 'Font Awesome 5 Free';
+    font-family: 'Font Awesome 5 Free', sans-serif;
     font-weight: 900;
     position: absolute;
     left: 50%;

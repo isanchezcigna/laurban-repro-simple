@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Rutas de las imágenes
-    const logoUrl = 'https://radio.laurban.cl/static/uploads/laurban/logo.png';
-    const instagramUrl = 'https://radio.laurban.cl/static/uploads/laurban/instagram.png';
+    const logoUrl = 'https://azura.laurban.cl/static/uploads/laurban/logo.png';
+    const instagramUrl = 'https://azura.laurban.cl/static/uploads/laurban/instagram.png';
 
     // Crear elementos de imagen
     const logo = document.createElement('img');

@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const audio = document.getElementById('audio');
     const currentSongDiv = document.getElementById('current-song');
     const lyricsDiv = document.getElementById('lyrics');
-    const azuraCastApiUrl = 'https://radio.laurban.cl/api/nowplaying/laurban';
+    const azuraCastApiUrl = 'https://azura.laurban.cl/api/nowplaying/laurban';
     const musixmatchApiKey = 'TU_API_KEY_DE_MUSIXMATCH';
 
     async function fetchCurrentSong() {

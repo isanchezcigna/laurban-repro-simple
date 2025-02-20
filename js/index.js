@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function playAudio() {
         try {
-            audio.src = 'https://azura.laurban.cl/listen/laurban/media';
+            audio.src = 'https://play.laurban.cl/';
             await audio.play();
             userPaused = false;
         } catch (error) {

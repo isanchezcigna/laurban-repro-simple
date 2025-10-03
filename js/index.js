@@ -8,7 +8,7 @@
 
     // Constantes de configuración
     const CONFIG = {
-        STREAM_URL: 'https://play.laurban.cl/',
+        STREAM_URL: 'https://stream.laurban.cl:8000/media',
         API_URL: 'https://azura.laurban.cl/api/nowplaying/laurban',
         KICK_API_URL: 'https://kick.com/api/v2/channels/laurban/livestream',
         KICK_EMBED_URL: 'https://player.kick.com/laurban?muted=true&autoplay=true',
@@ -34,7 +34,9 @@
         audioContext: null,
         analyser: null,
         audioSource: null,
-        isVisualizerActive: false
+        isVisualizerActive: false,
+        retryCount: 0,
+        maxRetries: 3
     };
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
@@ -53,10 +55,12 @@
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             state.audioContext = new AudioContext();
             
-            // Crear analizador
+            // Crear analizador con mejor resolución para detectar kick
             state.analyser = state.audioContext.createAnalyser();
-            state.analyser.fftSize = 256;
-            state.analyser.smoothingTimeConstant = 0.8;
+            state.analyser.fftSize = 2048; // Mayor resolución para mejor detección de frecuencias bajas
+            state.analyser.smoothingTimeConstant = 0.6; // Menos suavizado para captar transitorios (kicks)
+            state.analyser.minDecibels = -90;
+            state.analyser.maxDecibels = -10;
             
             // Conectar el elemento de audio al analizador
             if (!state.audioSource) {
@@ -66,15 +70,32 @@
             }
             
             state.isVisualizerActive = true;
+            state.kickDetection = {
+                threshold: 0.7,
+                lastKickTime: 0,
+                minTimeBetweenKicks: 150, // ms - evita falsas detecciones
+                history: [],
+                maxHistory: 10
+            };
+            
             startLogoVisualization();
             
+            console.log('✅ Visualizador de audio inicializado correctamente');
+            console.log('🎵 Detección de kick/bass optimizada para música urbana');
+            
         } catch (error) {
-            console.error('Error al inicializar el visualizador de audio:', error);
+            console.warn('⚠️ No se pudo inicializar el visualizador de audio (probablemente CORS):', error.message);
+            console.log('ℹ️ El audio seguirá funcionando normalmente sin efectos visuales');
+            
+            // Aplicar animación CSS alternativa si el visualizador falla
+            if (elements.logo) {
+                elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
+            }
         }
     }
 
     /**
-     * Anima el logo basándose en la frecuencia del audio
+     * Anima el logo basándose en la frecuencia del audio con detección de kick mejorada
      */
     function startLogoVisualization() {
         if (!state.isVisualizerActive || !state.analyser) {
@@ -83,6 +104,8 @@
 
         const bufferLength = state.analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
+        let kickScale = 1.0;
+        let kickDecay = 0;
 
         function animate() {
             if (!state.isVisualizerActive || elements.audio.paused) {
@@ -92,20 +115,80 @@
 
             state.analyser.getByteFrequencyData(dataArray);
             
-            // Calcular intensidad promedio de frecuencias bajas (bass)
-            const bass = dataArray.slice(0, 10).reduce((a, b) => a + b, 0) / 10;
-            // Calcular intensidad promedio de frecuencias medias
-            const mid = dataArray.slice(10, 50).reduce((a, b) => a + b, 0) / 40;
-            // Calcular intensidad promedio de frecuencias altas
-            const treble = dataArray.slice(50, 100).reduce((a, b) => a + b, 0) / 50;
+            // Análisis de frecuencias optimizado para música urbana
+            // Sub-bass (20-60 Hz) - Índices 0-5 - Donde está el kick/bombo
+            const subBass = dataArray.slice(0, 6).reduce((a, b) => a + b, 0) / 6;
+            
+            // Bass (60-250 Hz) - Índices 6-20 - 808s, bajo
+            const bass = dataArray.slice(6, 21).reduce((a, b) => a + b, 0) / 15;
+            
+            // Low-mids (250-500 Hz) - Índices 21-40 - Snares, cuerpo de instrumentos
+            const lowMid = dataArray.slice(21, 41).reduce((a, b) => a + b, 0) / 20;
+            
+            // Mids (500-2000 Hz) - Índices 41-160 - Voces, melodías
+            const mid = dataArray.slice(41, 161).reduce((a, b) => a + b, 0) / 120;
+            
+            // High-mids (2000-4000 Hz) - Índices 161-320 - Presencia vocal
+            const highMid = dataArray.slice(161, 321).reduce((a, b) => a + b, 0) / 160;
+            
+            // Highs (4000+ Hz) - Índices 321+ - Hi-hats, platillos, brillo
+            const highs = dataArray.slice(321, 480).reduce((a, b) => a + b, 0) / 159;
             
             // Normalizar valores (0-1)
+            const subBassNorm = subBass / 255;
             const bassNorm = bass / 255;
+            const lowMidNorm = lowMid / 255;
             const midNorm = mid / 255;
-            const trebleNorm = treble / 255;
+            const highMidNorm = highMid / 255;
+            const highsNorm = highs / 255;
             
-            // Aplicar efectos al logo
-            applyLogoEffects(bassNorm, midNorm, trebleNorm);
+            // Detección inteligente de kick usando sub-bass y cambios bruscos
+            const currentTime = Date.now();
+            const kickEnergy = subBassNorm * 0.7 + bassNorm * 0.3;
+            const timeSinceLastKick = currentTime - state.kickDetection.lastKickTime;
+            
+            // Detectar kick: energía alta en sub-bass + tiempo mínimo entre kicks
+            if (kickEnergy > state.kickDetection.threshold && 
+                timeSinceLastKick > state.kickDetection.minTimeBetweenKicks) {
+                
+                // ¡KICK DETECTADO! 🥁
+                kickScale = 1.25; // Escala dramática
+                kickDecay = 1.0;
+                state.kickDetection.lastKickTime = currentTime;
+                
+                // Guardar en historial para análisis de BPM
+                state.kickDetection.history.push(currentTime);
+                if (state.kickDetection.history.length > state.kickDetection.maxHistory) {
+                    state.kickDetection.history.shift();
+                }
+            }
+            
+            // Decay del kick (efecto de rebote natural)
+            if (kickDecay > 0) {
+                kickDecay *= 0.85; // Decay rápido pero suave
+                kickScale = 1.0 + (0.25 * kickDecay);
+            } else {
+                kickScale = 1.0;
+            }
+            
+            // Calcular BPM estimado basado en el historial de kicks
+            let bpmMultiplier = 1.0;
+            if (state.kickDetection.history.length >= 4) {
+                const intervals = [];
+                for (let i = 1; i < state.kickDetection.history.length; i++) {
+                    intervals.push(state.kickDetection.history[i] - state.kickDetection.history[i - 1]);
+                }
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                const estimatedBPM = 60000 / avgInterval;
+                
+                // Ajustar multiplicador según BPM (música urbana típicamente 80-160 BPM)
+                if (estimatedBPM >= 80 && estimatedBPM <= 160) {
+                    bpmMultiplier = 1.0 + ((estimatedBPM - 120) / 400); // Sutil ajuste
+                }
+            }
+            
+            // Aplicar efectos al logo con énfasis en kick
+            applyLogoEffects(kickScale, subBassNorm, bassNorm, midNorm, highMidNorm, highsNorm, bpmMultiplier);
             
             requestAnimationFrame(animate);
         }
@@ -114,36 +197,68 @@
     }
 
     /**
-     * Aplica efectos visuales al logo basados en las frecuencias de audio
-     * @param {number} bass - Intensidad de frecuencias bajas (0-1)
-     * @param {number} mid - Intensidad de frecuencias medias (0-1)
-     * @param {number} treble - Intensidad de frecuencias altas (0-1)
+     * Aplica efectos visuales al logo basados en las frecuencias de audio con énfasis en kick
+     * @param {number} kickScale - Escala del kick detectado (1.0-1.25)
+     * @param {number} subBass - Intensidad sub-bass (0-1)
+     * @param {number} bass - Intensidad bass (0-1)
+     * @param {number} mid - Intensidad mids (0-1)
+     * @param {number} highMid - Intensidad high-mids (0-1)
+     * @param {number} highs - Intensidad highs (0-1)
+     * @param {number} bpmMultiplier - Multiplicador basado en BPM (0.8-1.2)
      */
-    function applyLogoEffects(bass, mid, treble) {
+    function applyLogoEffects(kickScale, subBass, bass, mid, highMid, highs, bpmMultiplier) {
         if (!elements.logo) {
             return;
         }
 
-        // Escala basada en bass (pulso)
-        const scale = 1 + (bass * 0.1);
+        // KICK domina la escala - 90% kick, 10% mids
+        const kickContribution = (kickScale - 1) * 0.9;
+        const midContribution = mid * 0.01; // Mids muy sutiles en escala
+        const scale = (1.0 + kickContribution + midContribution) * bpmMultiplier;
         
-        // Rotación sutil basada en mid
-        const rotation = (mid - 0.5) * 5;
+        // Rotación: Mids suaves (casi la mitad del efecto anterior)
+        const rotation = ((mid + highMid) / 2 - 0.5) * 4 * bpmMultiplier; // Reducido de 8 a 4
         
-        // Brillo basado en treble
-        const brightness = 1 + (treble * 0.3);
+        // Brillo: Kick domina, mids aportan sutilmente
+        const kickBrightness = (kickScale - 1) * 0.6; // 60% del kick
+        const midBrightness = (mid + highMid) / 2 * 0.1; // Solo 10% de mids
+        const brightness = 1 + kickBrightness + midBrightness;
         
-        // Saturación basada en la intensidad general
-        const saturation = 1 + ((bass + mid + treble) / 3) * 0.5;
+        // Saturación: Kick principalmente, mids como acento
+        const kickSaturation = (kickScale - 1) * 0.4;
+        const midSaturation = ((mid + highMid) / 2) * 0.15; // Reducido de 0.4 a 0.15
+        const saturation = 1 + kickSaturation + midSaturation;
         
-        // Sombra que pulsa con el bass
-        const shadowIntensity = 10 + (bass * 30);
-        const shadowColor = `rgba(252, 94, 22, ${0.3 + bass * 0.5})`;
+        // Sombra: Kick DOMINA completamente, mids casi no afectan
+        const kickShadow = (kickScale - 1) * 65; // 65px máximo en kick
+        const bassShadow = bass * 15; // Bass base sutil
+        const midShadow = mid * 5; // Mids muy sutiles (reducido de 10 a 5)
+        const shadowIntensity = 15 + bassShadow + midShadow + kickShadow;
         
-        // Aplicar transformaciones
-        elements.logo.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+        const kickOpacity = (kickScale - 1) * 0.55;
+        const bassOpacity = bass * 0.25;
+        const midOpacity = mid * 0.05; // Mids muy sutiles
+        const shadowOpacity = 0.4 + bassOpacity + midOpacity + kickOpacity;
+        const shadowColor = `rgba(252, 94, 22, ${shadowOpacity})`;
+        
+        // Movimiento vertical: SOLO el kick comanda el salto (golpe)
+        let verticalMove = 0;
+        if (kickScale > 1.1) {
+            // El salto es proporcional al kick, mids NO afectan
+            verticalMove = (kickScale - 1) * 25; // Aumentado de 20 a 25 para más impacto
+        }
+        
+        // Aplicar transformaciones - KICK es el protagonista
+        elements.logo.style.transform = `scale(${scale}) rotate(${rotation}deg) translateY(-${verticalMove}px)`;
         elements.logo.style.filter = `brightness(${brightness}) saturate(${saturation})`;
         elements.logo.style.filter += ` drop-shadow(0 0 ${shadowIntensity}px ${shadowColor})`;
+        
+        // Bonus: Efecto de "impacto" visual en kicks muy fuertes
+        if (kickScale > 1.2) {
+            // Pequeña distorsión en X para simular "golpe"
+            const impact = (kickScale - 1.2) * 3;
+            elements.logo.style.transform += ` scaleX(${1 + impact * 0.1})`;
+        }
     }
 
     /**
@@ -235,13 +350,21 @@
      */
     async function playAudio() {
         try {
-            // Si es la primera vez, establecer la fuente
-            if (!elements.audio.src || elements.audio.src === '') {
+            // Establecer la fuente solo si no está configurada
+            if (!elements.audio.src || elements.audio.src === window.location.href || elements.audio.src === '') {
+                console.log('🎵 Configurando stream URL:', CONFIG.STREAM_URL);
                 elements.audio.src = CONFIG.STREAM_URL;
+                // Cargar el audio
+                elements.audio.load();
+                // Pequeña pausa para que el navegador procese el src
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
             
+            console.log('▶️ Iniciando reproducción...');
             await elements.audio.play();
             state.userPaused = false;
+            state.retryCount = 0; // Resetear contador de reintentos
+            console.log('✅ Audio reproduciendo correctamente');
             
             // Inicializar visualizador de audio después de que el audio empiece
             setTimeout(() => {
@@ -253,9 +376,24 @@
             }, 100);
             
         } catch (error) {
-            console.error('Error al reproducir el audio:', error);
-            if (!state.userPaused) {
+            console.error('❌ Error al reproducir el audio:', error.name, '-', error.message);
+            
+            // Si es un error de CORS o red
+            if (error.name === 'NotSupportedError' || error.message.includes('CORS') || error.message.includes('sources')) {
+                console.warn('⚠️ Problema con el stream. Verifica:');
+                console.warn('1. Que el servidor de streaming esté activo');
+                console.warn('2. Que los headers CORS estén configurados');
+                console.warn('3. La URL del stream sea correcta:', CONFIG.STREAM_URL);
+            }
+            
+            // Reintentar solo si no es por pausa del usuario y no excede reintentos
+            if (!state.userPaused && state.retryCount < state.maxRetries) {
+                state.retryCount++;
+                console.log(`🔄 Reintento ${state.retryCount}/${state.maxRetries} en 2 segundos...`);
                 setTimeout(playAudio, CONFIG.RETRY_DELAY);
+            } else if (state.retryCount >= state.maxRetries) {
+                console.error('❌ Máximo de reintentos alcanzado. Por favor, verifica el servidor de streaming.');
+                state.retryCount = 0;
             }
         }
     }
@@ -587,6 +725,7 @@
 
         // Audio playing - asegurar que el visualizador esté activo
         elements.audio.addEventListener('playing', () => {
+            console.log('🎵 Audio playing event');
             if (!state.audioContext) {
                 setTimeout(() => {
                     initializeAudioVisualizer();
@@ -598,13 +737,39 @@
 
         // Audio paused - suspender visualizador
         elements.audio.addEventListener('pause', () => {
+            console.log('⏸️ Audio paused event');
             if (state.audioContext && state.audioContext.state === 'running') {
                 state.audioContext.suspend();
             }
         });
 
+        // Audio error
+        elements.audio.addEventListener('error', (e) => {
+            console.error('❌ Error en elemento audio:', e);
+            if (elements.audio.error) {
+                console.error('Código de error:', elements.audio.error.code);
+                console.error('Mensaje:', elements.audio.error.message);
+            }
+        });
+
+        // Audio stalled
+        elements.audio.addEventListener('stalled', () => {
+            console.warn('⚠️ Audio stalled - reconectando...');
+        });
+
+        // Audio waiting
+        elements.audio.addEventListener('waiting', () => {
+            console.log('⏳ Buffering...');
+        });
+
+        // Audio canplay
+        elements.audio.addEventListener('canplay', () => {
+            console.log('✅ Audio listo para reproducir');
+        });
+
         // Audio ended
         elements.audio.addEventListener('ended', () => {
+            console.log('🔚 Audio ended');
             if (!state.userPaused) {
                 playAudio();
             }

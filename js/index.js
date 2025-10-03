@@ -17,7 +17,7 @@
         WHATSAPP_URL: 'whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz',
         DEFAULT_TITLE: 'La Urban · Emisora Online',
         DEFAULT_COVER: 'https://laurban.cl/img/default.jpg',
-        UPDATE_INTERVAL: 30000,
+        UPDATE_INTERVAL: 10000, // Actualización cada 10 segundos para cambios rápidos
         INITIAL_DELAY: 1000,
         RETRY_DELAY: 2000,
         THEME_LIGHT_START: 6,
@@ -36,7 +36,9 @@
         audioSource: null,
         isVisualizerActive: false,
         retryCount: 0,
-        maxRetries: 3
+        maxRetries: 3,
+        currentCoverUrl: '',
+        lastSongId: null
     };
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
@@ -79,6 +81,7 @@
             };
             
             startLogoVisualization();
+            startBackgroundVisualization();
             
             console.log('✅ Visualizador de audio inicializado correctamente');
             console.log('🎵 Detección de kick/bass optimizada para música urbana');
@@ -262,6 +265,151 @@
     }
 
     /**
+     * Anima el background basándose en la frecuencia del audio
+     */
+    function startBackgroundVisualization() {
+        if (!state.isVisualizerActive || !state.analyser) {
+            return;
+        }
+
+        const bufferLength = state.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        function animateBackground() {
+            if (!state.isVisualizerActive) {
+                return;
+            }
+
+            requestAnimationFrame(animateBackground);
+            state.analyser.getByteFrequencyData(dataArray);
+
+            // El background reacciona a frecuencias ALTAS (hi-hats, voces agudas, platillos)
+            // Esto lo hace complementario al logo que reacciona al kick/bass
+            
+            // Highs: 4kHz+ (últimos 20% del espectro)
+            const highStart = Math.floor(bufferLength * 0.8);
+            let highSum = 0;
+            for (let i = highStart; i < bufferLength; i++) {
+                highSum += dataArray[i];
+            }
+            const highAvg = (highSum / (bufferLength - highStart)) / 255;
+
+            // High-Mids: 2kHz-4kHz (voces, melodías)
+            const highMidStart = Math.floor(bufferLength * 0.5);
+            const highMidEnd = highStart;
+            let highMidSum = 0;
+            for (let i = highMidStart; i < highMidEnd; i++) {
+                highMidSum += dataArray[i];
+            }
+            const highMidAvg = (highMidSum / (highMidEnd - highMidStart)) / 255;
+
+            // Mids: 500Hz-2kHz
+            const midStart = Math.floor(bufferLength * 0.15);
+            const midEnd = highMidStart;
+            let midSum = 0;
+            for (let i = midStart; i < midEnd; i++) {
+                midSum += dataArray[i];
+            }
+            const midAvg = (midSum / (midEnd - midStart)) / 255;
+
+            applyBackgroundEffects(highAvg, highMidAvg, midAvg);
+        }
+
+        animateBackground();
+    }
+
+    /**
+     * Aplica efectos visuales VISIBLES al background basados en frecuencias ALTAS
+     * El background reacciona a highs/mids (complementario al logo que reacciona a kick/bass)
+     * @param {number} highs - Intensidad de agudos (0-1) - hi-hats, platillos
+     * @param {number} highMids - Intensidad de agudos-medios (0-1) - voces agudas
+     * @param {number} mids - Intensidad de medios (0-1) - melodías
+     */
+    function applyBackgroundEffects(highs, highMids, mids) {
+        if (!elements.backgroundOverlay) {
+            return;
+        }
+
+        // Opacidad MÁS visible - debe notarse claramente
+        const opacity = 0.4 + (highs * 0.5) + (highMids * 0.2); // 0.4 a 1.1 (VISIBLE!)
+        
+        // Hue shift MÁS pronunciado
+        const hueShift = (highs * 40) - (mids * 15); // -15 a +40 grados
+        
+        // Saturación MÁS notoria
+        const saturation = 1 + (highs * 0.8) + (highMids * 0.3); // 1.0 a 2.1
+        
+        // Brillo MÁS visible
+        const brightness = 1 + (highMids * 0.5) + (highs * 0.3); // 1.0 a 1.8
+        
+        // Scale más perceptible
+        const scale = 1 + (highs * 0.12) + (highMids * 0.06); // 1.0 a 1.18
+        
+        // Aplicar filtros - AHORA VISIBLES
+        elements.backgroundOverlay.style.opacity = Math.min(opacity, 1.0);
+        elements.backgroundOverlay.style.filter = `brightness(${brightness}) saturate(${saturation}) hue-rotate(${hueShift}deg)`;
+        elements.backgroundOverlay.style.transform = `scale(${scale})`;
+        
+        // Background texture con cambios VISIBLES
+        const bgHue = (highMids * 20) + (mids * 12) - (highs * 8); // -8 a +32 grados
+        const bgSaturation = 1 + (highs * 0.4) + (mids * 0.2); // 1.0 a 1.6
+        const bgBrightness = 1 + (highMids * 0.25) + (highs * 0.15); // 1.0 a 1.4
+        
+        document.documentElement.style.setProperty('--bg-hue', `${bgHue}deg`);
+        document.documentElement.style.setProperty('--bg-saturation', bgSaturation);
+        document.documentElement.style.setProperty('--bg-brightness', bgBrightness);
+    }
+
+    /**
+     * Actualiza el botón de play/pause personalizado
+     */
+    function updateCustomPlayButton() {
+        if (!elements.customPlayBtn) {
+            return;
+        }
+        
+        const icon = elements.customPlayBtn.querySelector('i');
+        if (elements.audio.paused) {
+            icon.className = 'fas fa-play';
+        } else {
+            icon.className = 'fas fa-pause';
+        }
+    }
+
+    /**
+     * Actualiza el botón de mute
+     */
+    function updateMuteButton() {
+        if (!elements.customMuteBtn) {
+            return;
+        }
+        
+        const icon = elements.customMuteBtn.querySelector('i');
+        if (elements.audio.muted || elements.audio.volume === 0) {
+            icon.className = 'fas fa-volume-mute';
+        } else if (elements.audio.volume < 0.5) {
+            icon.className = 'fas fa-volume-down';
+        } else {
+            icon.className = 'fas fa-volume-up';
+        }
+    }
+
+    /**
+     * Actualiza el slider de volumen con el valor actual
+     */
+    function updateVolumeSlider() {
+        if (!elements.volumeSlider) {
+            return;
+        }
+        
+        const volume = elements.audio.volume * 100;
+        elements.volumeSlider.value = volume;
+        
+        // Actualizar variable CSS para el track del slider
+        elements.volumeSlider.style.setProperty('--volume-percentage', `${volume}%`);
+    }
+
+    /**
      * Detiene el visualizador de audio
      */
     function stopLogoVisualization() {
@@ -271,6 +419,17 @@
             elements.logo.style.transform = '';
             elements.logo.style.filter = '';
         }
+        
+        if (elements.backgroundOverlay) {
+            elements.backgroundOverlay.style.opacity = '0.4';
+            elements.backgroundOverlay.style.filter = '';
+            elements.backgroundOverlay.style.transform = '';
+        }
+        
+        // Reset body background
+        document.documentElement.style.setProperty('--bg-hue', '0deg');
+        document.documentElement.style.setProperty('--bg-saturation', '1');
+        document.documentElement.style.setProperty('--bg-brightness', '1');
     }
 
 
@@ -544,13 +703,54 @@
     }
 
     /**
+     * Actualiza el cover con transición animada y PRECARGA la imagen
+     * @param {string} newCoverUrl - URL del nuevo cover
+     */
+    function updateCoverWithTransition(newCoverUrl) {
+        if (!elements.cover || state.currentCoverUrl === newCoverUrl) {
+            return;
+        }
+
+        // PRECARGAR la imagen antes de iniciar la animación
+        const preloadImg = new Image();
+        preloadImg.onload = () => {
+            // Ahora que la imagen está cargada, iniciar animación de salida
+            elements.cover.classList.add('cover-exit');
+            
+            setTimeout(() => {
+                // Cambiar la imagen (ya está precargada)
+                elements.cover.src = newCoverUrl;
+                state.currentCoverUrl = newCoverUrl;
+                elements.audio.setAttribute('poster', newCoverUrl);
+                
+                // Quitar clase de salida y agregar clase de entrada
+                elements.cover.classList.remove('cover-exit');
+                elements.cover.classList.add('cover-enter');
+                
+                setTimeout(() => {
+                    elements.cover.classList.remove('cover-enter');
+                }, 650);
+            }, 350);
+        };
+        
+        preloadImg.onerror = () => {
+            // Si falla la precarga, usar fallback sin animación
+            console.warn('Error al precargar cover:', newCoverUrl);
+            elements.cover.src = newCoverUrl;
+            state.currentCoverUrl = newCoverUrl;
+        };
+        
+        preloadImg.src = newCoverUrl;
+    }
+
+    /**
      * Actualiza la UI con información de la canción actual
      * @param {Object} radioData - Datos de la radio
      */
     function updateSongInfoUI(radioData) {
         if (!radioData?.now_playing?.song) {
             if (!state.showingKickVideo && elements.cover) {
-                elements.cover.src = CONFIG.DEFAULT_COVER;
+                updateCoverWithTransition(CONFIG.DEFAULT_COVER);
             }
             if (elements.song) {
                 elements.song.textContent = CONFIG.DEFAULT_TITLE;
@@ -559,13 +759,19 @@
             return;
         }
 
-        const { artist, title: songTitle, art } = radioData.now_playing.song;
+        const { artist, title: songTitle, art, id: songId } = radioData.now_playing.song;
         const { mainArtist, formattedTitle } = parseArtistInfo(artist, songTitle);
         const songText = `Escuchas: ${mainArtist} - ${formattedTitle}`;
 
+        // Detectar cambio de canción por ID
+        const songChanged = state.lastSongId !== null && state.lastSongId !== songId;
+        state.lastSongId = songId;
+
         if (!state.showingKickVideo && elements.cover) {
-            elements.cover.src = art || CONFIG.DEFAULT_COVER;
-            elements.audio.setAttribute('poster', elements.cover.src);
+            const coverUrl = art || CONFIG.DEFAULT_COVER;
+            if (songChanged || state.currentCoverUrl !== coverUrl) {
+                updateCoverWithTransition(coverUrl);
+            }
         }
         
         if (elements.song) {
@@ -696,6 +902,10 @@
         elements.playButton = document.getElementById('playButton');
         elements.overlay = document.getElementById('overlay');
         elements.logo = document.getElementById('logo');
+        elements.backgroundOverlay = document.getElementById('backgroundOverlay');
+        elements.customPlayBtn = document.getElementById('customPlayBtn');
+        elements.customMuteBtn = document.getElementById('customMuteBtn');
+        elements.volumeSlider = document.getElementById('volumeSlider');
         elements.dynamicButton = document.getElementById('dynamicButton');
         elements.dynamicCanvas = document.getElementById('dynamicCanvas');
         elements.buttonIcon = document.getElementById('buttonIcon');
@@ -716,16 +926,49 @@
      * Configura todos los event listeners
      */
     function setupEventListeners() {
-        // Botón de reproducción
+        // Botón de reproducción inicial (overlay)
         elements.playButton.addEventListener('click', async () => {
             await playAudio();
             elements.overlay.style.display = 'none';
             elements.logo.classList.add('active');
+            updateCustomPlayButton();
+        });
+
+        // Botón de play/pause personalizado
+        elements.customPlayBtn.addEventListener('click', async () => {
+            if (elements.audio.paused) {
+                await playAudio();
+            } else {
+                elements.audio.pause();
+            }
+            updateCustomPlayButton();
+        });
+
+        // Botón de mute personalizado
+        elements.customMuteBtn.addEventListener('click', () => {
+            elements.audio.muted = !elements.audio.muted;
+            updateMuteButton();
+        });
+
+        // Slider de volumen
+        elements.volumeSlider.addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            elements.audio.volume = volume;
+            updateVolumeSlider();
+            
+            // Actualizar botón de mute según volumen
+            if (volume === 0) {
+                elements.audio.muted = true;
+            } else if (elements.audio.muted) {
+                elements.audio.muted = false;
+            }
+            updateMuteButton();
         });
 
         // Audio playing - asegurar que el visualizador esté activo
         elements.audio.addEventListener('playing', () => {
             console.log('🎵 Audio playing event');
+            updateCustomPlayButton();
             if (!state.audioContext) {
                 setTimeout(() => {
                     initializeAudioVisualizer();
@@ -738,6 +981,7 @@
         // Audio paused - suspender visualizador
         elements.audio.addEventListener('pause', () => {
             console.log('⏸️ Audio paused event');
+            updateCustomPlayButton();
             if (state.audioContext && state.audioContext.state === 'running') {
                 state.audioContext.suspend();
             }

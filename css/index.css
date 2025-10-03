@@ -1,3 +1,9 @@
+:root {
+    --bg-hue: 0deg;
+    --bg-saturation: 1;
+    --bg-brightness: 1;
+}
+
 body {
     background: linear-gradient(to bottom, #627d4d 0%,#1f3b08 100%);
     color: white;
@@ -26,19 +32,58 @@ body::before {
     opacity: 0.5;
     pointer-events: none;
     z-index: -1;
-} 
-/* Ajustes específicos para contenedores */
+    transition: filter 0.12s ease-out;
+    will-change: filter;
+    filter: hue-rotate(var(--bg-hue)) saturate(var(--bg-saturation)) brightness(var(--bg-brightness));
+}
+
+/* Overlay animado para el background - MÁS VISIBLE */
+.background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, 
+        rgba(252, 94, 22, 0.6) 0%, 
+        rgba(252, 158, 22, 0.4) 30%, 
+        rgba(255, 200, 50, 0.25) 60%,
+        rgba(255, 150, 0, 0.1) 80%,
+        transparent 95%);
+    opacity: 0.4; /* Base más visible */
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity 0.12s ease-out, 
+                filter 0.12s ease-out,
+                transform 0.15s ease-out;
+    will-change: opacity, filter, transform;
+    transform-origin: center center;
+    mix-blend-mode: screen; /* Screen para mayor visibilidad */
+}
+
+/* Ajustes específicos para contenedores - Card más bonito */
 .player-container {
-    background: rgba(0, 0, 0, 0.7);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    max-width: 400px;
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 20, 20, 0.9) 100%);
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 
+                0 0 20px rgba(252, 94, 22, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    max-width: 420px;
     width: 100%;
     text-align: center;
     position: relative;
-    margin: 10px; /* Añadir margen para evitar que se corte en pantallas pequeñas */
-    transition: max-width 0.5s ease;
+    margin: 10px;
+    transition: max-width 0.5s ease, box-shadow 0.3s ease;
+    z-index: 1;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(252, 94, 22, 0.2);
+}
+
+.player-container:hover {
+    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.7), 
+                0 0 30px rgba(252, 94, 22, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 .logo {
     width: 100%;
@@ -68,11 +113,57 @@ body::before {
 
 .cover {
     width: 100%;
-    border-radius: 10px;
+    border-radius: 15px;
     padding-top: 10px;
+    transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
+
+/* Animaciones para cambio de cover - MEJORADAS */
+.cover.cover-exit {
+    animation: coverExitAnimation 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.cover.cover-enter {
+    animation: coverEnterAnimation 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes coverExitAnimation {
+    0% {
+        opacity: 1;
+        transform: scale(1) rotateY(0deg);
+        filter: blur(0px) brightness(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.75) rotateY(90deg);
+        filter: blur(4px) brightness(0.5);
+    }
+}
+
+@keyframes coverEnterAnimation {
+    0% {
+        opacity: 0;
+        transform: scale(0.75) rotateY(-90deg);
+        filter: blur(4px) brightness(0.5);
+    }
+    60% {
+        opacity: 1;
+        filter: blur(0px) brightness(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotateY(0deg);
+        filter: blur(0px) brightness(1);
+    }
+}
+
 .cover-container {
     transition: opacity 0.5s ease;
+    perspective: 1200px; /* Aumentado para efecto 3D más pronunciado */
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
 }
 .overlay {
     position: absolute;
@@ -93,12 +184,162 @@ body::before {
     font-size: 3rem;
     cursor: pointer;
 }
+
+/* Ocultar audio nativo */
 audio {
+    display: none;
+}
+
+/* Controles personalizados modernos */
+.custom-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, rgba(252, 94, 22, 0.15) 0%, rgba(252, 158, 22, 0.1) 100%);
+    border-radius: 15px;
+    border: 1px solid rgba(252, 94, 22, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 4px 15px rgba(252, 94, 22, 0.2);
+}
+
+.control-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, rgba(252, 94, 22, 0.9) 0%, rgba(252, 158, 22, 0.9) 100%);
+    color: white;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(252, 94, 22, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.control-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.control-btn:hover::before {
     width: 100%;
-    height: 40px;
-    margin-top: 10px;
-    border-radius: 10px;
-    will-change: contents;
+    height: 100%;
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(252, 94, 22, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.control-btn.play-pause {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+}
+
+.control-btn.volume {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(40, 40, 40, 0.6) 100%);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.control-btn.volume:hover {
+    background: linear-gradient(135deg, rgba(252, 94, 22, 0.7) 0%, rgba(252, 158, 22, 0.7) 100%);
+}
+
+.volume-slider-container {
+    flex: 1;
+    max-width: 150px;
+    position: relative;
+}
+
+.volume-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, 
+        rgba(252, 94, 22, 0.3) 0%, 
+        rgba(252, 158, 22, 0.3) 100%);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fc5e16 0%, #fc9e16 100%);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(252, 94, 22, 0.6);
+    transition: all 0.2s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 12px rgba(252, 94, 22, 0.8);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fc5e16 0%, #fc9e16 100%);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(252, 94, 22, 0.6);
+    transition: all 0.2s ease;
+}
+
+.volume-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 12px rgba(252, 94, 22, 0.8);
+}
+
+.volume-slider::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, 
+        rgba(252, 94, 22, 0.5) 0%, 
+        rgba(252, 94, 22, 0.5) var(--volume-percentage, 100%), 
+        rgba(255, 255, 255, 0.1) var(--volume-percentage, 100%), 
+        rgba(255, 255, 255, 0.1) 100%);
+    border-radius: 3px;
+    height: 6px;
+}
+
+.volume-slider::-moz-range-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    height: 6px;
+}
+
+.volume-slider::-moz-range-progress {
+    background: linear-gradient(to right, rgba(252, 94, 22, 0.5), rgba(252, 94, 22, 0.5));
+    border-radius: 3px;
+    height: 6px;
 }
 .song-info {
     margin-top: 10px;
@@ -156,6 +397,8 @@ audio::-webkit-media-controls-fullscreen-button {
     margin-top: 20px;
     display: flex;
     justify-content: space-around;
+    z-index: 2; /* Sobre el overlay del background */
+    position: relative;
 }
 .btn-container a, .btn-container button {
     color: white;
@@ -235,6 +478,8 @@ audio::-webkit-media-controls-fullscreen-button {
     margin-top: 20px;
     text-align: center;
     text-shadow: 2px 2px 4px #000000;
+    z-index: 2; /* Sobre el overlay del background */
+    position: relative;
 }
 .rrss {
     display: flex;
@@ -242,6 +487,8 @@ audio::-webkit-media-controls-fullscreen-button {
     margin-top: 20px;
     font-size: 2rem;
     gap: 20px;
+    z-index: 2; /* Sobre el overlay del background */
+    position: relative;
 }
 .rrss a {
     color: #fc5e16;

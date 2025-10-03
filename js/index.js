@@ -6,6 +6,78 @@
 (function () {
     'use strict';
 
+    // Suprimir TODOS los errores de extensiones del navegador de forma más agresiva
+    const originalError = console.error;
+    console.error = function(...args) {
+        const message = args.join(' ');
+        // Filtrar errores conocidos de extensiones
+        if (message.includes('Extension context invalidated') ||
+            message.includes('message port closed') ||
+            message.includes('Receiving end does not exist') ||
+            message.includes('chrome.runtime')) {
+            return; // Silenciar completamente
+        }
+        originalError.apply(console, args);
+    };
+
+    // Interceptar chrome.runtime completamente
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+        try {
+            // Envolver sendMessage
+            const originalSendMessage = chrome.runtime.sendMessage;
+            if (originalSendMessage) {
+                chrome.runtime.sendMessage = function(...args) {
+                    try {
+                        const callback = args[args.length - 1];
+                        if (typeof callback === 'function') {
+                            args[args.length - 1] = function(response) {
+                                if (chrome.runtime.lastError) {
+                                    // Silenciar error
+                                    return;
+                                }
+                                callback(response);
+                            };
+                        }
+                        return originalSendMessage.apply(this, args);
+                    } catch (e) {
+                        return undefined;
+                    }
+                };
+            }
+
+            // Envolver connect
+            const originalConnect = chrome.runtime.connect;
+            if (originalConnect) {
+                chrome.runtime.connect = function(...args) {
+                    try {
+                        return originalConnect.apply(this, args);
+                    } catch (e) {
+                        return {
+                            postMessage: () => {},
+                            disconnect: () => {},
+                            onMessage: { addListener: () => {} }
+                        };
+                    }
+                };
+            }
+        } catch (e) {
+            // Silenciar cualquier error al interceptar
+        }
+    }
+
+    // Event listener para errores globales
+    window.addEventListener('error', function(e) {
+        if (e.message && (
+            e.message.includes('Extension context invalidated') ||
+            e.message.includes('message port closed') ||
+            e.message.includes('chrome.runtime')
+        )) {
+            e.preventDefault();
+            e.stopPropagation();
+            return true;
+        }
+    }, true);
+
     // Constantes de configuración
     const CONFIG = {
         STREAM_URL: 'https://stream.laurban.cl:8000/media',
@@ -38,7 +110,9 @@
         retryCount: 0,
         maxRetries: 3,
         currentCoverUrl: '',
-        lastSongId: null
+        lastSongId: null,
+        isFirstPlay: true, // Bandera para detectar primera reproducción
+        volumeFadeInterval: null // Intervalo para el fade de volumen
     };
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
@@ -330,30 +404,30 @@
             return;
         }
 
-        // Opacidad MÁS visible - debe notarse claramente
-        const opacity = 0.4 + (highs * 0.5) + (highMids * 0.2); // 0.4 a 1.1 (VISIBLE!)
+        // Opacidad MUCHO MÁS visible - debe notarse claramente
+        const opacity = 0.5 + (highs * 0.7) + (highMids * 0.3); // 0.5 a 1.5 (MUY VISIBLE!)
         
-        // Hue shift MÁS pronunciado
-        const hueShift = (highs * 40) - (mids * 15); // -15 a +40 grados
+        // Hue shift MÁS DRAMÁTICO
+        const hueShift = (highs * 60) - (mids * 20); // -20 a +60 grados
         
-        // Saturación MÁS notoria
-        const saturation = 1 + (highs * 0.8) + (highMids * 0.3); // 1.0 a 2.1
+        // Saturación MÁS INTENSA
+        const saturation = 1.2 + (highs * 1.2) + (highMids * 0.5); // 1.2 a 2.9
         
-        // Brillo MÁS visible
-        const brightness = 1 + (highMids * 0.5) + (highs * 0.3); // 1.0 a 1.8
+        // Brillo MÁS EVIDENTE
+        const brightness = 1.1 + (highMids * 0.7) + (highs * 0.5); // 1.1 a 2.3
         
-        // Scale más perceptible
-        const scale = 1 + (highs * 0.12) + (highMids * 0.06); // 1.0 a 1.18
+        // Scale más pronunciado
+        const scale = 1 + (highs * 0.18) + (highMids * 0.09); // 1.0 a 1.27
         
-        // Aplicar filtros - AHORA VISIBLES
+        // Aplicar filtros - AHORA MUY VISIBLES
         elements.backgroundOverlay.style.opacity = Math.min(opacity, 1.0);
         elements.backgroundOverlay.style.filter = `brightness(${brightness}) saturate(${saturation}) hue-rotate(${hueShift}deg)`;
         elements.backgroundOverlay.style.transform = `scale(${scale})`;
         
-        // Background texture con cambios VISIBLES
-        const bgHue = (highMids * 20) + (mids * 12) - (highs * 8); // -8 a +32 grados
-        const bgSaturation = 1 + (highs * 0.4) + (mids * 0.2); // 1.0 a 1.6
-        const bgBrightness = 1 + (highMids * 0.25) + (highs * 0.15); // 1.0 a 1.4
+        // Background texture con cambios MÁS EVIDENTES
+        const bgHue = (highMids * 30) + (mids * 18) - (highs * 12); // -12 a +48 grados
+        const bgSaturation = 1.2 + (highs * 0.6) + (mids * 0.3); // 1.2 a 2.1
+        const bgBrightness = 1.1 + (highMids * 0.35) + (highs * 0.25); // 1.1 a 1.7
         
         document.documentElement.style.setProperty('--bg-hue', `${bgHue}deg`);
         document.documentElement.style.setProperty('--bg-saturation', bgSaturation);
@@ -505,6 +579,47 @@
     }
 
     /**
+     * Aplica un fade-in suave al volumen para evitar sustos en primera reproducción
+     * @param {number} targetVolume - Volumen objetivo (0-1)
+     * @param {number} duration - Duración del fade en milisegundos
+     */
+    function fadeInVolume(targetVolume, duration = 2500) {
+        // Limpiar cualquier fade anterior
+        if (state.volumeFadeInterval) {
+            clearInterval(state.volumeFadeInterval);
+        }
+        
+        const startVolume = 0;
+        const startTime = Date.now();
+        const volumeStep = 0.01; // Incremento suave
+        const stepDuration = (duration / (targetVolume / volumeStep)); // Calcular intervalo
+        
+        console.log(`🔊 Fade-in: 0 → ${targetVolume} en ${duration}ms`);
+        
+        state.volumeFadeInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1); // 0 a 1
+            const currentVolume = startVolume + (targetVolume * progress);
+            
+            elements.audio.volume = currentVolume;
+            
+            // Actualizar slider visual
+            if (elements.volumeSlider) {
+                elements.volumeSlider.value = Math.round(currentVolume * 100);
+                updateVolumeSlider();
+            }
+            
+            // Terminar fade cuando alcance el objetivo
+            if (progress >= 1) {
+                clearInterval(state.volumeFadeInterval);
+                state.volumeFadeInterval = null;
+                elements.audio.volume = targetVolume;
+                console.log('✅ Fade-in completado');
+            }
+        }, 50); // Actualización cada 50ms para suavidad
+    }
+
+    /**
      * Reproduce el audio de la emisora
      */
     async function playAudio() {
@@ -519,11 +634,24 @@
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
             
+            // Fade-in suave en primera reproducción para evitar sustos
+            const targetVolume = elements.volumeSlider ? elements.volumeSlider.value / 100 : 1.0;
+            if (state.isFirstPlay) {
+                console.log('🎵 Primera reproducción - fade-in suave desde 0 a', targetVolume);
+                elements.audio.volume = 0; // Iniciar en silencio
+                state.isFirstPlay = false;
+            }
+            
             console.log('▶️ Iniciando reproducción...');
             await elements.audio.play();
             state.userPaused = false;
             state.retryCount = 0; // Resetear contador de reintentos
             console.log('✅ Audio reproduciendo correctamente');
+            
+            // Aplicar fade-in de volumen si estaba en 0
+            if (elements.audio.volume === 0) {
+                fadeInVolume(targetVolume, 2500); // 2.5 segundos de fade
+            }
             
             // Inicializar visualizador de audio después de que el audio empiece
             setTimeout(() => {

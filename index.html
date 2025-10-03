@@ -32,6 +32,53 @@
     <meta name="twitter:description" content="La Urban es una emisora online que transmite música urbana las 24 horas del día.">
     <meta name="twitter:image" content="https://laurban.cl/img/android-chrome-512x512.png">
     <meta name="twitter:url" content="https://laurban.cl">
+    
+    <!-- Suprimir errores de extensiones del navegador ANTES de cualquier código -->
+    <script>
+        (function() {
+            'use strict';
+            // Interceptar console.error inmediatamente
+            const originalError = console.error;
+            console.error = function(...args) {
+                const msg = args.join(' ');
+                if (msg.includes('message port closed') || 
+                    msg.includes('Extension context') || 
+                    msg.includes('chrome.runtime') ||
+                    msg.includes('Unchecked runtime.lastError')) {
+                    return; // Silenciar
+                }
+                originalError.apply(console, args);
+            };
+            
+            // Interceptar console.warn también
+            const originalWarn = console.warn;
+            console.warn = function(...args) {
+                const msg = args.join(' ');
+                if (msg.includes('message port closed') || 
+                    msg.includes('Extension context') || 
+                    msg.includes('chrome.runtime') ||
+                    msg.includes('Unchecked runtime.lastError')) {
+                    return; // Silenciar
+                }
+                originalWarn.apply(console, args);
+            };
+            
+            // Suprimir errores globales de extensiones
+            window.addEventListener('error', function(e) {
+                if (e.message && (
+                    e.message.includes('message port closed') ||
+                    e.message.includes('Extension context') ||
+                    e.message.includes('chrome.runtime') ||
+                    e.message.includes('Unchecked runtime.lastError')
+                )) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return true;
+                }
+            }, true);
+        })();
+    </script>
 </head>
 <body>
     <!-- Overlay animado para el background -->
@@ -55,7 +102,7 @@
             Tu navegador no soporta el elemento <code>audio</code>.
         </audio>
         
-        <!-- Controles personalizados -->
+        <!-- Controles personalizados con redes sociales integradas -->
         <div class="custom-controls">
             <button id="customPlayBtn" class="control-btn play-pause" aria-label="Play/Pause">
                 <i class="fas fa-play"></i>
@@ -66,6 +113,13 @@
             <div class="volume-slider-container">
                 <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" aria-label="Volume">
             </div>
+            <div class="social-divider"></div>
+            <a href="https://www.instagram.com/laurban.cl" target="_blank" rel="noopener noreferrer" class="control-btn social-btn" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.facebook.com/RadioUrban" target="_blank" rel="noopener noreferrer" class="control-btn social-btn" aria-label="Facebook">
+                <i class="fab fa-facebook"></i>
+            </a>
         </div>
         
         <div class="next-song-info d-none">
@@ -83,14 +137,10 @@
             <i id="button2Icon" class="fas fa-comment-dots"></i> 
             <span id="button2Text">Chatea acá!</span>
         </a>
-        <a id="dynamicButton" class="btn btn-primary-custom" href="whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz">
-            <i id="buttonIcon" class="fab fa-whatsapp"></i> 
-            <span id="buttonText">Escríbenos</span>
+        <a id="dynamicButton" class="btn btn-primary-custom" href="#">
+            <i id="buttonIcon" class="fas fa-music"></i> 
+            <span id="buttonText">Pedir canción</span>
         </a>
-    </div>
-    <div class="rrss">
-        <a href="https://www.instagram.com/laurban.cl" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://www.facebook.com/RadioUrban" target="_blank"><i class="fab fa-facebook"></i></a>
     </div>
 
     <div class="footer">

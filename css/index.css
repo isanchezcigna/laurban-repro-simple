@@ -89,7 +89,7 @@ body::before {
     width: 100%;
     max-width: 100%;
     height: auto;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     transition: transform 0.03s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
                 filter 0.05s ease-out, 
@@ -113,10 +113,55 @@ body::before {
 
 .cover {
     width: 100%;
+    height: 100%;
+    display: block;
     border-radius: 15px;
-    padding-top: 10px;
+    object-fit: cover;
+    object-position: center;
     transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 0 30px rgba(0, 0, 0, 0.15);
+    position: relative;
+    filter: 
+        contrast(1.05) 
+        saturate(0.95) 
+        sepia(0.05);
+}
+
+/* Efecto vintage con overlay de textura */
+.cover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(252, 94, 22, 0.03) 0%, rgba(252, 158, 22, 0.03) 100%);
+    border-radius: 15px;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    z-index: 1;
+}
+
+/* Borde interno estilo polaroid/vinilo */
+.cover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid rgba(252, 94, 22, 0.15);
+    border-radius: 15px;
+    box-shadow: 
+        inset 0 0 20px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* Animaciones para cambio de cover - MEJORADAS */
@@ -159,11 +204,14 @@ body::before {
 }
 
 .cover-container {
-    transition: opacity 0.5s ease;
-    perspective: 1200px; /* Aumentado para efecto 3D más pronunciado */
+    width: 100%;
+    aspect-ratio: 1 / 1;
     position: relative;
     overflow: hidden;
     border-radius: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    transition: opacity 0.5s ease;
+    perspective: 1200px;
 }
 .overlay {
     position: absolute;
@@ -194,31 +242,32 @@ audio {
 .custom-controls {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-    padding: 15px 20px;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 8px 12px;
     background: linear-gradient(135deg, rgba(252, 94, 22, 0.15) 0%, rgba(252, 158, 22, 0.1) 100%);
-    border-radius: 15px;
+    border-radius: 12px;
     border: 1px solid rgba(252, 94, 22, 0.3);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
                 0 4px 15px rgba(252, 94, 22, 0.2);
 }
 
 .control-btn {
-    width: 50px;
-    height: 50px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     border: none;
     background: linear-gradient(135deg, rgba(252, 94, 22, 0.9) 0%, rgba(252, 158, 22, 0.9) 100%);
     color: white;
-    font-size: 1.3rem;
+    font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(252, 94, 22, 0.4),
+    box-shadow: 0 3px 10px rgba(252, 94, 22, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .control-btn::before {
@@ -250,17 +299,17 @@ audio {
 }
 
 .control-btn.play-pause {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5rem;
+    width: 48px;
+    height: 48px;
+    font-size: 1.3rem;
 }
 
 .control-btn.volume {
-    width: 45px;
-    height: 45px;
-    font-size: 1.1rem;
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
     background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(40, 40, 40, 0.6) 100%);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3),
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
@@ -270,14 +319,15 @@ audio {
 
 .volume-slider-container {
     flex: 1;
-    max-width: 150px;
+    max-width: 100px;
     position: relative;
 }
 
 .volume-slider {
-    width: 100%;
-    height: 6px;
-    border-radius: 3px;
+    flex: 1;
+    min-width: 80px;
+    height: 4px;
+    border-radius: 2px;
     background: linear-gradient(to right, 
         rgba(252, 94, 22, 0.3) 0%, 
         rgba(252, 158, 22, 0.3) 100%);
@@ -290,13 +340,14 @@ audio {
 .volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: linear-gradient(135deg, #fc5e16 0%, #fc9e16 100%);
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(252, 94, 22, 0.6);
+    box-shadow: 0 2px 6px rgba(252, 94, 22, 0.6);
     transition: all 0.2s ease;
+    margin-top: -5px; /* Centrar verticalmente con la track */
 }
 
 .volume-slider::-webkit-slider-thumb:hover {
@@ -305,19 +356,58 @@ audio {
 }
 
 .volume-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: linear-gradient(135deg, #fc5e16 0%, #fc9e16 100%);
     cursor: pointer;
     border: none;
-    box-shadow: 0 2px 8px rgba(252, 94, 22, 0.6);
+    box-shadow: 0 2px 6px rgba(252, 94, 22, 0.6);
     transition: all 0.2s ease;
+    margin-top: -5px; /* Centrar verticalmente con la track */
 }
 
 .volume-slider::-moz-range-thumb:hover {
     transform: scale(1.2);
     box-shadow: 0 3px 12px rgba(252, 94, 22, 0.8);
+}
+
+/* Divisor vertical entre controles y redes sociales */
+.social-divider {
+    width: 1px;
+    height: 32px;
+    background: linear-gradient(to bottom, 
+        transparent 0%, 
+        rgba(252, 94, 22, 0.3) 50%, 
+        transparent 100%);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Botones de redes sociales integrados en controles */
+.control-btn.social-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    background: linear-gradient(135deg, rgba(252, 94, 22, 0.15) 0%, rgba(252, 158, 22, 0.1) 100%);
+    border: 1px solid rgba(252, 94, 22, 0.25);
+    color: #fc5e16;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(252, 94, 22, 0.3);
+}
+
+.control-btn.social-btn:hover {
+    background: linear-gradient(135deg, rgba(252, 94, 22, 0.3) 0%, rgba(252, 158, 22, 0.25) 100%);
+    border-color: rgba(252, 94, 22, 0.5);
+    color: #ff7e3d;
+    transform: scale(1.15);
+}
+
+.control-btn.social-btn:active {
+    transform: scale(1.05);
 }
 
 .volume-slider::-webkit-slider-runnable-track {

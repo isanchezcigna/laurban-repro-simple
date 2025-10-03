@@ -30,11 +30,133 @@
         isKickLive: false,
         showingKickVideo: false,
         iframeLoaded: false,
-        iframe2Loaded: false
+        iframe2Loaded: false,
+        audioContext: null,
+        analyser: null,
+        audioSource: null,
+        isVisualizerActive: false
     };
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
     const elements = {};
+
+    /**
+     * Inicializa el contexto de audio y el analizador para visualización
+     */
+    function initializeAudioVisualizer() {
+        if (state.audioContext) {
+            return; // Ya está inicializado
+        }
+
+        try {
+            // Crear contexto de audio
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            state.audioContext = new AudioContext();
+            
+            // Crear analizador
+            state.analyser = state.audioContext.createAnalyser();
+            state.analyser.fftSize = 256;
+            state.analyser.smoothingTimeConstant = 0.8;
+            
+            // Conectar el elemento de audio al analizador
+            if (!state.audioSource) {
+                state.audioSource = state.audioContext.createMediaElementSource(elements.audio);
+                state.audioSource.connect(state.analyser);
+                state.analyser.connect(state.audioContext.destination);
+            }
+            
+            state.isVisualizerActive = true;
+            startLogoVisualization();
+            
+        } catch (error) {
+            console.error('Error al inicializar el visualizador de audio:', error);
+        }
+    }
+
+    /**
+     * Anima el logo basándose en la frecuencia del audio
+     */
+    function startLogoVisualization() {
+        if (!state.isVisualizerActive || !state.analyser) {
+            return;
+        }
+
+        const bufferLength = state.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        function animate() {
+            if (!state.isVisualizerActive || elements.audio.paused) {
+                requestAnimationFrame(animate);
+                return;
+            }
+
+            state.analyser.getByteFrequencyData(dataArray);
+            
+            // Calcular intensidad promedio de frecuencias bajas (bass)
+            const bass = dataArray.slice(0, 10).reduce((a, b) => a + b, 0) / 10;
+            // Calcular intensidad promedio de frecuencias medias
+            const mid = dataArray.slice(10, 50).reduce((a, b) => a + b, 0) / 40;
+            // Calcular intensidad promedio de frecuencias altas
+            const treble = dataArray.slice(50, 100).reduce((a, b) => a + b, 0) / 50;
+            
+            // Normalizar valores (0-1)
+            const bassNorm = bass / 255;
+            const midNorm = mid / 255;
+            const trebleNorm = treble / 255;
+            
+            // Aplicar efectos al logo
+            applyLogoEffects(bassNorm, midNorm, trebleNorm);
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    }
+
+    /**
+     * Aplica efectos visuales al logo basados en las frecuencias de audio
+     * @param {number} bass - Intensidad de frecuencias bajas (0-1)
+     * @param {number} mid - Intensidad de frecuencias medias (0-1)
+     * @param {number} treble - Intensidad de frecuencias altas (0-1)
+     */
+    function applyLogoEffects(bass, mid, treble) {
+        if (!elements.logo) {
+            return;
+        }
+
+        // Escala basada en bass (pulso)
+        const scale = 1 + (bass * 0.1);
+        
+        // Rotación sutil basada en mid
+        const rotation = (mid - 0.5) * 5;
+        
+        // Brillo basado en treble
+        const brightness = 1 + (treble * 0.3);
+        
+        // Saturación basada en la intensidad general
+        const saturation = 1 + ((bass + mid + treble) / 3) * 0.5;
+        
+        // Sombra que pulsa con el bass
+        const shadowIntensity = 10 + (bass * 30);
+        const shadowColor = `rgba(252, 94, 22, ${0.3 + bass * 0.5})`;
+        
+        // Aplicar transformaciones
+        elements.logo.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+        elements.logo.style.filter = `brightness(${brightness}) saturate(${saturation})`;
+        elements.logo.style.filter += ` drop-shadow(0 0 ${shadowIntensity}px ${shadowColor})`;
+    }
+
+    /**
+     * Detiene el visualizador de audio
+     */
+    function stopLogoVisualization() {
+        state.isVisualizerActive = false;
+        
+        if (elements.logo) {
+            elements.logo.style.transform = '';
+            elements.logo.style.filter = '';
+        }
+    }
 
 
     /**
@@ -113,9 +235,23 @@
      */
     async function playAudio() {
         try {
-            elements.audio.src = CONFIG.STREAM_URL;
+            // Si es la primera vez, establecer la fuente
+            if (!elements.audio.src || elements.audio.src === '') {
+                elements.audio.src = CONFIG.STREAM_URL;
+            }
+            
             await elements.audio.play();
             state.userPaused = false;
+            
+            // Inicializar visualizador de audio después de que el audio empiece
+            setTimeout(() => {
+                if (!state.audioContext && !elements.audio.paused) {
+                    initializeAudioVisualizer();
+                } else if (state.audioContext && state.audioContext.state === 'suspended') {
+                    state.audioContext.resume();
+                }
+            }, 100);
+            
         } catch (error) {
             console.error('Error al reproducir el audio:', error);
             if (!state.userPaused) {
@@ -130,6 +266,11 @@
     function pauseAudio() {
         state.userPaused = true;
         elements.audio.pause();
+        
+        // Suspender el contexto de audio para ahorrar recursos
+        if (state.audioContext && state.audioContext.state === 'running') {
+            state.audioContext.suspend();
+        }
     }
 
     /**
@@ -390,20 +531,21 @@
     }
 
     /**
-     * Inicializa la reproducción automática
+     * Inicializa la reproducción automática (solo si el navegador lo permite)
      */
     async function initializeAutoplay() {
+        // No intentar autoplay por defecto para evitar errores
+        // El usuario debe hacer clic en el botón de play
         setTimeout(async () => {
+            // Solo ocultar el overlay si ya está reproduciendo (caso raro)
             if (!elements.audio.paused) {
                 elements.overlay.style.display = 'none';
                 elements.logo.classList.add('active');
-                return;
-            }
-            
-            if (elements.audio.paused && !state.userPaused) {
-                await playAudio();
-                elements.overlay.style.display = 'none';
-                elements.logo.classList.add('active');
+                
+                // Si ya está reproduciendo, inicializar visualizador
+                if (!state.audioContext) {
+                    initializeAudioVisualizer();
+                }
             }
         }, CONFIG.INITIAL_DELAY);
     }
@@ -441,6 +583,24 @@
             await playAudio();
             elements.overlay.style.display = 'none';
             elements.logo.classList.add('active');
+        });
+
+        // Audio playing - asegurar que el visualizador esté activo
+        elements.audio.addEventListener('playing', () => {
+            if (!state.audioContext) {
+                setTimeout(() => {
+                    initializeAudioVisualizer();
+                }, 100);
+            } else if (state.audioContext.state === 'suspended') {
+                state.audioContext.resume();
+            }
+        });
+
+        // Audio paused - suspender visualizador
+        elements.audio.addEventListener('pause', () => {
+            if (state.audioContext && state.audioContext.state === 'running') {
+                state.audioContext.suspend();
+            }
         });
 
         // Audio ended

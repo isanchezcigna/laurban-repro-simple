@@ -88,6 +88,8 @@
         <img src="img/logo.png" alt="Logo" class="logo" id="logo">
         <div class="cover-container">
             <img id="cover" src="https://laurban.cl/img/default.jpg" alt="Carátula del Álbum" class="cover">
+            <!-- Indicador de volumen sobre el cover -->
+            <div id="volumeIndicator" class="volume-indicator">100%</div>
         </div>
         <div class="song-info">
             <div class="marquee">
@@ -110,6 +112,11 @@
             <button id="customMuteBtn" class="control-btn volume" aria-label="Mute/Unmute">
                 <i class="fas fa-volume-up"></i>
             </button>
+            <!-- Popup de volumen para móviles (fuera del botón) -->
+            <div class="volume-popup" id="volumePopup">
+                <input type="range" id="volumePopupSlider" class="volume-popup-slider" min="0" max="100" value="100" aria-label="Volume Popup">
+                <div class="volume-popup-value" id="volumePopupValue">100%</div>
+            </div>
             <div class="volume-slider-container">
                 <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" aria-label="Volume">
             </div>
@@ -127,24 +134,27 @@
                 <span id="next-song"></span>
             </div>
         </div>
+        
+        <!-- Botones de acción integrados -->
+        <div class="action-buttons">
+            <a id="dynamicCanvas" class="action-btn" href="#" target="">
+                <i id="button2Icon" class="fas fa-comment-dots"></i> 
+                <span id="button2Text">Chatea acá!</span>
+            </a>
+            <a id="dynamicButton" class="action-btn" href="#">
+                <i id="buttonIcon" class="fas fa-music"></i> 
+                <span id="buttonText">Pedir canción</span>
+            </a>
+        </div>
+        
+        <!-- Copyright integrado -->
+        <div class="player-footer">
+            <p>Desde el 2009 agudizando tus sentidos</p>
+        </div>
+        
         <div class="overlay" id="overlay">
             <button id="playButton" class="play-button"><i class="fas fa-play"></i></button>
         </div>
-    </div>
-
-    <div class="btn-container">
-        <a id="dynamicCanvas" class="btn btn-primary-custom" href="#" target="">
-            <i id="button2Icon" class="fas fa-comment-dots"></i> 
-            <span id="button2Text">Chatea acá!</span>
-        </a>
-        <a id="dynamicButton" class="btn btn-primary-custom" href="#">
-            <i id="buttonIcon" class="fas fa-music"></i> 
-            <span id="buttonText">Pedir canción</span>
-        </a>
-    </div>
-
-    <div class="footer">
-        <p>&copy; 2009 Radio Urban - 2025 La Urban</p>
     </div>
 
     <div id="musicRequestCanvas" class="col">

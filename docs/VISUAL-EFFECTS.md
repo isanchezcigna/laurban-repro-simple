@@ -13,17 +13,20 @@ Este documento describe las mejoras visuales implementadas en el reproductor de 
 **Descripción**: El fondo ahora reacciona a las frecuencias de audio en tiempo real.
 
 **Implementación**:
+
 - **Archivo**: `index.html` - Nuevo elemento `<div id="backgroundOverlay" class="background-overlay"></div>`
 - **Estilos**: `css/index.css` - Clase `.background-overlay` con gradiente radial naranja
 - **JavaScript**: `js/index.js` - Función `startBackgroundVisualization()` y `applyBackgroundEffects()`
 
 **Características**:
+
 - **Bass Detection**: Opacidad del overlay varía de 0.15 a 0.4 según la intensidad de bajos
 - **Mid Frequencies**: Brillo del gradiente responde a voces/melodías (0.8 a 1.2)
 - **Scale Pulse**: Escala sutil de 1.0 a 1.05 con el kick
 - **Color Shift**: Hue rotation de 10° en kicks fuertes (>0.7)
 
 **Análisis de Frecuencias**:
+
 ```javascript
 // Bass: 0-250Hz (primeros 10% del espectro)
 // Mids: 250Hz-2kHz (10%-30% del espectro)
@@ -36,10 +39,12 @@ Este documento describe las mejoras visuales implementadas en el reproductor de 
 **Descripción**: Animaciones fluidas y llamativas al cambiar de canción.
 
 **Implementación**:
+
 - **JavaScript**: `js/index.js` - Función `updateCoverWithTransition()`
 - **CSS**: `css/index.css` - Animaciones `coverExitAnimation` y `coverEnterAnimation`
 
 **Efecto Visual**:
+
 1. **Salida (300ms)**:
    - Fade out (opacity: 1 → 0)
    - Scale down (1.0 → 0.8)
@@ -51,6 +56,7 @@ Este documento describe las mejoras visuales implementadas en el reproductor de 
    - Rotate Y (-90° → 0°) - Continúa el flip
 
 **Detección de Cambios**:
+
 - Usa `song.id` para detectar cambios de canción
 - Compara `state.currentCoverUrl` vs nueva URL
 - Evita transiciones innecesarias si la URL no cambió
@@ -62,11 +68,13 @@ Este documento describe las mejoras visuales implementadas en el reproductor de 
 **Cambio**: Intervalo de actualización reducido de **30 segundos a 10 segundos**
 
 **Impacto**:
+
 - Cambios de cover casi instantáneos entre canciones
 - Información de nowplaying más actualizada
 - Mejor experiencia de usuario
 
 **Archivo**: `js/index.js`
+
 ```javascript
 UPDATE_INTERVAL: 10000, // Era 30000 (30s)
 ```
@@ -162,7 +170,7 @@ elements.backgroundOverlay = document.getElementById('backgroundOverlay');
 
 ### Capas Z-Index
 
-```
+```code
 z-index: -1  → body::before (texture)
 z-index: 0   → background-overlay (reactivo)
 z-index: 1   → player-container
@@ -207,7 +215,7 @@ z-index: 1000 → canvas laterales
 
 ## 🔄 Ciclo de Actualización
 
-```
+```html
 10 segundos → updateSongInfo()
               ↓
          ¿Cambió song.id?

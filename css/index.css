@@ -11,12 +11,14 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
+    padding: 0;
     font-family: 'Lato', sans-serif;
     font-weight: 900;
     font-style: normal;
-    overflow: hidden; /* Evita el scroll en pantallas pequeñas */
+    overflow-x: hidden; /* Solo horizontal */
+    overflow-y: auto; /* Permitir scroll vertical si es necesario */
 }
 
 body::before {
@@ -213,6 +215,31 @@ body::before {
     transition: opacity 0.5s ease;
     perspective: 1200px;
 }
+
+/* Indicador de volumen sobre el cover */
+.volume-indicator {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.volume-indicator.show {
+    opacity: 1;
+}
+
 .overlay {
     position: absolute;
     top: 0;
@@ -253,7 +280,8 @@ audio {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
                 0 4px 15px rgba(252, 94, 22, 0.2);
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible; /* Permitir que el popup se vea fuera del contenedor */
+    position: relative; /* Para que el popup se posicione correctamente */
 }
 
 .control-btn {
@@ -269,7 +297,7 @@ audio {
     box-shadow: 0 3px 10px rgba(252, 94, 22, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* Cambiar de hidden a visible para que el popup se vea */
     flex-shrink: 0;
 }
 
@@ -314,6 +342,14 @@ audio {
     background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(40, 40, 40, 0.6) 100%);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Transición suave para el icono/texto de volumen */
+.control-btn.volume i {
+    transition: opacity 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .control-btn.volume:hover {
@@ -436,6 +472,103 @@ audio {
     border-radius: 3px;
     height: 6px;
 }
+
+/* ========== BOTONES DE ACCIÓN INTEGRADOS ========== */
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(252, 94, 22, 0.9) 0%, rgba(252, 158, 22, 0.9) 100%);
+    border: 1px solid rgba(252, 94, 22, 0.4);
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(252, 94, 22, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-height: 44px; /* Altura mínima para touch targets */
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.action-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(252, 94, 22, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+.action-btn i {
+    font-size: 1.1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.action-btn span {
+    position: relative;
+    z-index: 1;
+}
+
+/* ========== FOOTER INTEGRADO ========== */
+.player-footer {
+    margin-top: 15px;
+    padding: 10px;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(20, 20, 20, 0.3) 100%);
+    border-radius: 8px;
+    border: 1px solid rgba(252, 94, 22, 0.2);
+}
+
+.player-footer p {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.7) 0%,
+        rgba(252, 158, 22, 0.9) 50%,
+        rgba(255, 255, 255, 0.7) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px rgba(252, 94, 22, 0.3);
+}
+
 .song-info {
     margin-top: 12px;
     position: relative;
@@ -519,13 +652,14 @@ audio {
     box-sizing: border-box;
     position: relative;
     padding-left: 30px;
+    display: flex;
 }
 
 .marquee span {
     display: inline-block;
-    padding-left: 100%;
     font-weight: 500;
     letter-spacing: 0.3px;
+    padding-right: 50px; /* Espacio entre repeticiones */
     text-shadow: 
         0 0 10px rgba(252, 94, 22, 0.4),
         2px 2px 4px rgba(0, 0, 0, 0.8);
@@ -541,12 +675,22 @@ audio {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: marquee 18s linear infinite, gradient-shift 3s ease-in-out infinite;
+    animation: marquee-continuous 20s linear infinite, gradient-shift 3s ease-in-out infinite;
 }
 
-@keyframes marquee {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-100%, 0); }
+/* Duplicar contenido para loop infinito */
+.marquee span::after {
+    content: attr(data-text);
+    padding-left: 50px;
+}
+
+@keyframes marquee-continuous {
+    0% { 
+        transform: translateX(0); 
+    }
+    100% { 
+        transform: translateX(-50%); 
+    }
 }
 
 @keyframes gradient-shift {
@@ -763,5 +907,334 @@ audio::-webkit-media-controls-fullscreen-button {
     }
     .logo {
         margin-top: 25px; /* Aumentar margen superior */
+    }
+}
+
+/* ========== POPUP DE VOLUMEN PARA MÓVILES ========== */
+.volume-popup {
+    position: absolute;
+    bottom: calc(100% + 15px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.98) 0%, rgba(40, 40, 40, 0.98) 100%);
+    border: 1px solid rgba(252, 94, 22, 0.4);
+    border-radius: 12px;
+    padding: 15px 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 20px rgba(252, 94, 22, 0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    width: 60px;
+    height: 130px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.volume-popup.show {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(-50%) scale(1);
+}
+
+.volume-popup::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 12px;
+    height: 12px;
+    background: rgba(236, 28, 36, 0.98);
+    border-right: 1px solid rgba(236, 28, 36, 0.6);
+    border-bottom: 1px solid rgba(236, 28, 36, 0.6);
+}
+
+.volume-popup-slider {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 4px;
+    height: 100px;
+    border-radius: 2px;
+    background: linear-gradient(to top, 
+        rgba(252, 94, 22, 0.3) 0%, 
+        rgba(252, 158, 22, 0.3) 100%);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    margin: 0 auto;
+}
+
+.volume-popup-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fc5e16 0%, #fc9e16 100%);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(252, 94, 22, 0.6);
+    transition: all 0.2s ease;
+}
+
+.volume-popup-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 12px rgba(252, 94, 22, 0.8);
+}
+
+.volume-popup-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fc5e16 0%, #fc9e16 100%);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(252, 94, 22, 0.6);
+    transition: all 0.2s ease;
+}
+
+.volume-popup-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 12px rgba(252, 94, 22, 0.8);
+}
+
+.volume-popup-value {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fc5e16;
+    text-shadow: 0 0 8px rgba(252, 94, 22, 0.6);
+}
+
+/* ========== MEDIA QUERIES RESPONSIVAS ========== */
+/* Pantallas pequeñas - Ocultar slider horizontal, usar popup */
+@media (max-width: 400px) {
+    .custom-controls {
+        gap: 8px;
+        padding: 8px 10px;
+    }
+    
+    .volume-slider-container {
+        display: none; /* Ocultar slider horizontal */
+    }
+    
+    /* Asegurar que el popup esté disponible en móviles */
+    .volume-popup {
+        display: block !important; /* Forzar display */
+        z-index: 9999 !important; /* Asegurar que esté por encima de todo */
+    }
+    
+    .volume-popup.show {
+        opacity: 1 !important;
+        pointer-events: all !important;
+        transform: translateX(-50%) scale(1) !important;
+    }
+    
+    .social-divider {
+        margin: 0 2px;
+        height: 28px;
+    }
+    
+    .control-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+    
+    .control-btn.play-pause {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+    
+    .control-btn.volume {
+        width: 34px;
+        height: 34px;
+        position: relative; /* Para el popup */
+    }
+    
+    .control-btn.social-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Pantallas medianas - Mantener slider pero más compacto */
+@media (min-width: 401px) and (max-width: 500px) {
+    .custom-controls {
+        gap: 8px;
+        padding: 8px 12px;
+    }
+    
+    .volume-slider-container {
+        min-width: 50px;
+        max-width: 80px;
+    }
+    
+    .control-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .control-btn.play-pause {
+        width: 46px;
+        height: 46px;
+    }
+    
+    .control-btn.social-btn {
+        width: 34px;
+        height: 34px;
+    }
+    
+    /* Ocultar popup en pantallas medianas */
+    .volume-popup {
+        display: none;
+    }
+}
+
+/* Pantallas grandes - Diseño completo, sin popup */
+@media (min-width: 501px) {
+    .volume-popup {
+        display: none;
+    }
+    
+    /* En pantallas grandes (escritorio), siempre dos columnas */
+    .action-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Ajustes para botones de acción en móviles */
+@media (max-width: 400px) {
+    /* Hacer el reproductor centrado con gap uniforme */
+    .player-container {
+        width: calc(100vw - 40px); /* Ancho total - 20px gap a cada lado */
+        max-width: calc(100vw - 40px);
+        min-width: unset; /* Remover min-width fijo */
+        padding: 20px;
+        margin: 20px auto; /* Centrar con margen uniforme */
+    }
+    
+    /* Logo muy arriba con margen bottom para balancear */
+    .logo {
+        margin-top: 0; /* Sin gap, pegado al borde */
+        margin-bottom: 15px; /* Balanceado con las divisiones de abajo */
+        max-width: 85%; /* Hacerlo un poco más pequeño */
+    }
+    
+    /* Botones en columna solo si es muy pequeño */
+    .action-buttons {
+        grid-template-columns: 1fr; /* Una columna en muy pequeño */
+        gap: 8px;
+    }
+    
+    .action-btn {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    
+    .action-btn i {
+        font-size: 1rem;
+    }
+    
+    .player-footer p {
+        font-size: 0.7rem;
+    }
+}
+
+@media (min-width: 401px) and (max-width: 500px) {
+    /* Pantallas medianas */
+    .player-container {
+        width: calc(100vw - 60px); /* 30px gap a cada lado */
+        max-width: calc(100vw - 60px);
+        padding: 22px;
+        margin: 20px auto;
+    }
+    
+    /* En pantallas medianas, dos columnas si hay espacio */
+    .action-buttons {
+        grid-template-columns: repeat(2, 1fr); /* Dos columnas */
+    }
+    
+    .action-btn {
+        font-size: 0.875rem;
+        padding: 11px 15px;
+    }
+}
+
+/* Para pantallas muy pequeñas (iPhone SE) */
+@media (max-width: 375px) {
+    .player-container {
+        width: calc(100vw - 30px); /* 15px gap a cada lado */
+        max-width: calc(100vw - 30px);
+        min-width: unset;
+        padding: 18px 15px;
+        margin: 15px auto;
+    }
+    
+    /* Logo muy arriba con margen bottom para balancear */
+    .logo {
+        margin-top: 0; /* Sin gap, pegado al borde */
+        margin-bottom: 12px; /* Balanceado con las divisiones de abajo */
+        max-width: 80%;
+    }
+    
+    .cover-container {
+        margin-bottom: 12px;
+    }
+    
+    /* Intentar dos columnas si cabe (ancho ~345px) */
+    .action-buttons {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+    
+    .action-btn {
+        font-size: 0.8rem;
+        padding: 10px 12px;
+        gap: 6px;
+    }
+    
+    .action-btn span {
+        white-space: nowrap; /* Evitar que el texto se parta */
+    }
+}
+
+/* Para pantallas extra pequeñas donde definitivamente necesitamos 1 columna */
+@media (max-width: 320px) {
+    .action-buttons {
+        grid-template-columns: 1fr; /* Forzar una columna */
+    }
+    
+    .action-btn {
+        font-size: 0.85rem;
+    }
+}
+
+/* Ajustes adicionales para centrado perfecto */
+@media (max-width: 500px) {
+    body {
+        padding: 0; /* Remover cualquier padding del body */
+    }
+    
+    .player-container {
+        box-sizing: border-box; /* Incluir padding en el ancho */
+    }
+}
+
+/* Para pantallas en landscape mode */
+@media (max-height: 600px) and (orientation: landscape) {
+    body {
+        overflow-y: auto; /* Permitir scroll en landscape */
+        justify-content: flex-start;
+        padding: 10px 0;
+    }
+    
+    .player-container {
+        margin: 10px auto;
     }
 }

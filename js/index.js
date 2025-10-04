@@ -112,7 +112,8 @@
         currentCoverUrl: '',
         lastSongId: null,
         isFirstPlay: true, // Bandera para detectar primera reproducción
-        volumeFadeInterval: null // Intervalo para el fade de volumen
+        volumeFadeInterval: null, // Intervalo para el fade de volumen
+        volumeDisplayTimeout: null // Timeout para ocultar el porcentaje de volumen
     };
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
@@ -469,6 +470,31 @@
     }
 
     /**
+     * Muestra temporalmente el porcentaje de volumen en el cover
+     * @param {number} volumePercent - Porcentaje de volumen (0-100)
+     */
+    function showVolumePercentage(volumePercent) {
+        const volumeIndicator = document.getElementById('volumeIndicator');
+        if (!volumeIndicator) {
+            return;
+        }
+
+        // Limpiar timeout anterior si existe
+        if (state.volumeDisplayTimeout) {
+            clearTimeout(state.volumeDisplayTimeout);
+        }
+
+        // Actualizar el texto y mostrar
+        volumeIndicator.textContent = `${Math.round(volumePercent)}%`;
+        volumeIndicator.classList.add('show');
+
+        // Después de 2 segundos, ocultar
+        state.volumeDisplayTimeout = setTimeout(() => {
+            volumeIndicator.classList.remove('show');
+        }, 2000);
+    }
+
+    /**
      * Actualiza el slider de volumen con el valor actual
      */
     function updateVolumeSlider() {
@@ -821,6 +847,7 @@
         
         if (elements.song) {
             elements.song.textContent = livename;
+            elements.song.setAttribute('data-text', livename);
         }
         
         document.title = livetitle;
@@ -882,6 +909,7 @@
             }
             if (elements.song) {
                 elements.song.textContent = CONFIG.DEFAULT_TITLE;
+                elements.song.setAttribute('data-text', CONFIG.DEFAULT_TITLE);
             }
             document.title = CONFIG.DEFAULT_TITLE;
             return;
@@ -904,6 +932,7 @@
         
         if (elements.song) {
             elements.song.textContent = songText;
+            elements.song.setAttribute('data-text', songText);
         }
         
         document.title = `La Urban · Reproduciendo: ${mainArtist} - ${formattedTitle}`;
@@ -1034,6 +1063,9 @@
         elements.customPlayBtn = document.getElementById('customPlayBtn');
         elements.customMuteBtn = document.getElementById('customMuteBtn');
         elements.volumeSlider = document.getElementById('volumeSlider');
+        elements.volumePopup = document.getElementById('volumePopup');
+        elements.volumePopupSlider = document.getElementById('volumePopupSlider');
+        elements.volumePopupValue = document.getElementById('volumePopupValue');
         elements.dynamicButton = document.getElementById('dynamicButton');
         elements.dynamicCanvas = document.getElementById('dynamicCanvas');
         elements.buttonIcon = document.getElementById('buttonIcon');
@@ -1072,17 +1104,22 @@
             updateCustomPlayButton();
         });
 
-        // Botón de mute personalizado
-        elements.customMuteBtn.addEventListener('click', () => {
-            elements.audio.muted = !elements.audio.muted;
-            updateMuteButton();
-        });
-
         // Slider de volumen
         elements.volumeSlider.addEventListener('input', (e) => {
             const volume = e.target.value / 100;
             elements.audio.volume = volume;
             updateVolumeSlider();
+            
+            // Mostrar porcentaje en el botón temporalmente
+            showVolumePercentage(e.target.value);
+            
+            // Sincronizar con popup slider
+            if (elements.volumePopupSlider) {
+                elements.volumePopupSlider.value = e.target.value;
+                if (elements.volumePopupValue) {
+                    elements.volumePopupValue.textContent = `${e.target.value}%`;
+                }
+            }
             
             // Actualizar botón de mute según volumen
             if (volume === 0) {
@@ -1092,6 +1129,78 @@
             }
             updateMuteButton();
         });
+
+        // ========== POPUP DE VOLUMEN PARA MÓVILES ==========
+        // Botón de mute/volume con popup adaptativo
+        elements.customMuteBtn.addEventListener('click', (e) => {
+            const isMobile = window.innerWidth <= 400;
+            
+            // Debug para desarrollo
+            console.log('Botón volumen clickeado:', {
+                windowWidth: window.innerWidth,
+                isMobile,
+                popupExists: !!elements.volumePopup
+            });
+            
+            // En pantallas grandes: mute/unmute tradicional
+            if (!isMobile) {
+                elements.audio.muted = !elements.audio.muted;
+                updateMuteButton();
+                return;
+            }
+            
+            // En móviles con popup disponible: toggle popup
+            if (elements.volumePopup) {
+                e.stopPropagation();
+                const wasShowing = elements.volumePopup.classList.contains('show');
+                elements.volumePopup.classList.toggle('show');
+                console.log('Popup toggled:', !wasShowing);
+            } else {
+                console.warn('Popup de volumen no encontrado en el DOM');
+            }
+        });
+
+        // Slider del popup (si existe)
+        if (elements.volumePopupSlider) {
+            elements.volumePopupSlider.addEventListener('input', (e) => {
+                const volume = e.target.value / 100;
+                elements.audio.volume = volume;
+                
+                // Sincronizar con slider horizontal
+                if (elements.volumeSlider) {
+                    elements.volumeSlider.value = e.target.value;
+                }
+                
+                // Actualizar texto del popup
+                if (elements.volumePopupValue) {
+                    elements.volumePopupValue.textContent = `${e.target.value}%`;
+                }
+                
+                // Mostrar porcentaje en el botón temporalmente
+                showVolumePercentage(e.target.value);
+                
+                updateVolumeSlider();
+                
+                // Actualizar botón de mute según volumen
+                if (volume === 0) {
+                    elements.audio.muted = true;
+                } else if (elements.audio.muted) {
+                    elements.audio.muted = false;
+                }
+                updateMuteButton();
+            });
+        }
+
+        // Cerrar popup al hacer clic fuera
+        if (elements.volumePopup) {
+            document.addEventListener('click', (e) => {
+                if (elements.volumePopup.classList.contains('show') &&
+                    !elements.volumePopup.contains(e.target) &&
+                    !elements.customMuteBtn.contains(e.target)) {
+                    elements.volumePopup.classList.remove('show');
+                }
+            });
+        }
 
         // Audio playing - asegurar que el visualizador esté activo
         elements.audio.addEventListener('playing', () => {

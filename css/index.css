@@ -24,19 +24,46 @@ body {
 body::before {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: -10%;
+    left: -10%;
+    width: 120%;
+    height: 120%;
     background-image: url('../img/background.png');
     background-repeat: repeat;
-    background-size: auto;
+    background-size: 400px 400px; /* Tamaño fijo para controlar el patrón */
     opacity: 0.5;
     pointer-events: none;
     z-index: -1;
     transition: filter 0.12s ease-out;
-    will-change: filter;
+    will-change: filter, background-position;
     filter: hue-rotate(var(--bg-hue)) saturate(var(--bg-saturation)) brightness(var(--bg-brightness));
+    /* Animación infinita usando background-position en lugar de transform */
+    animation: infiniteScroll 30s linear infinite;
+}
+
+@keyframes infiniteScroll {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 400px 400px; /* Se mueve exactamente el tamaño del patrón */
+    }
+}
+
+/* SVG de ondas animadas en el fondo */
+.wave-background {
+    position: fixed;
+    bottom: -50%; /* Posición desde abajo para que no se corte */
+    left: 0;
+    width: 100%;
+    height: 150%; /* Más alto para cubrir toda la pantalla */
+    pointer-events: none;
+    z-index: -2;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+    transition: opacity 0.1s ease-out, transform 0.1s ease-out;
+    will-change: opacity, transform;
+    transform-origin: bottom center;
 }
 
 /* Overlay animado para el background - MÁS VISIBLE */
@@ -527,6 +554,7 @@ audio {
     box-shadow: 0 6px 20px rgba(252, 94, 22, 0.6),
                 inset 0 1px 0 rgba(255, 255, 255, 0.3);
     color: white;
+    text-decoration: none; /* Sin subrayado al hover */
 }
 
 .action-btn:active {
@@ -542,9 +570,10 @@ audio {
 .action-btn span {
     position: relative;
     z-index: 1;
+    text-decoration: none; /* Sin subrayado */
 }
 
-/* ========== FOOTER INTEGRADO ========== */
+/* ========== FOOTER INTEGRADO CON ANIMACIÓN ========== */
 .player-footer {
     margin-top: 15px;
     padding: 10px;
@@ -552,21 +581,48 @@ audio {
     background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(20, 20, 20, 0.3) 100%);
     border-radius: 8px;
     border: 1px solid rgba(252, 94, 22, 0.2);
+    overflow: hidden;
+    position: relative;
 }
 
 .player-footer p {
     margin: 0;
     font-size: 0.75rem;
-    font-weight: 500;
-    background: linear-gradient(90deg, 
-        rgba(255, 255, 255, 0.7) 0%,
-        rgba(252, 158, 22, 0.9) 50%,
-        rgba(255, 255, 255, 0.7) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-weight: 600;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 10px rgba(252, 94, 22, 0.3);
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    animation: colorShift 8s ease-in-out infinite;
+}
+
+/* Animación de fade para cambio de texto */
+.player-footer p.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.player-footer p.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Animación de colores que rotan */
+@keyframes colorShift {
+    0%, 100% {
+        color: rgba(255, 255, 255, 0.9);
+        text-shadow: 0 0 10px rgba(252, 94, 22, 0.6);
+    }
+    25% {
+        color: rgba(252, 158, 22, 1);
+        text-shadow: 0 0 15px rgba(252, 158, 22, 0.8);
+    }
+    50% {
+        color: rgba(255, 200, 50, 1);
+        text-shadow: 0 0 20px rgba(255, 200, 50, 0.9);
+    }
+    75% {
+        color: rgba(252, 94, 22, 1);
+        text-shadow: 0 0 15px rgba(252, 94, 22, 0.8);
+    }
 }
 
 .song-info {

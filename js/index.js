@@ -113,8 +113,20 @@
         lastSongId: null,
         isFirstPlay: true, // Bandera para detectar primera reproducción
         volumeFadeInterval: null, // Intervalo para el fade de volumen
-        volumeDisplayTimeout: null // Timeout para ocultar el porcentaje de volumen
+        volumeDisplayTimeout: null, // Timeout para ocultar el porcentaje de volumen
+        currentSloganIndex: 0, // Índice del slogan actual
+        sloganInterval: null // Intervalo para cambiar slogans
     };
+
+    // Frases históricas de La Urban
+    const SLOGANS = [
+        'agudizando tus sentidos',
+        '¡todo el rato!',
+        'te pone bien!',
+        'un hit en tu ventana',
+        'sounds good',
+        'se vienen cositas'
+    ];
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
     const elements = {};
@@ -387,7 +399,15 @@
             }
             const midAvg = (midSum / (midEnd - midStart)) / 255;
 
-            applyBackgroundEffects(highAvg, highMidAvg, midAvg);
+            // Bass para las ondas
+            const bassEnd = midStart;
+            let bassSum = 0;
+            for (let i = 0; i < bassEnd; i++) {
+                bassSum += dataArray[i];
+            }
+            const bassAvg = (bassSum / bassEnd) / 255;
+
+            applyBackgroundEffects(highAvg, highMidAvg, midAvg, bassAvg);
         }
 
         animateBackground();
@@ -399,8 +419,9 @@
      * @param {number} highs - Intensidad de agudos (0-1) - hi-hats, platillos
      * @param {number} highMids - Intensidad de agudos-medios (0-1) - voces agudas
      * @param {number} mids - Intensidad de medios (0-1) - melodías
+     * @param {number} bass - Intensidad de bajos (0-1) - para ondas
      */
-    function applyBackgroundEffects(highs, highMids, mids) {
+    function applyBackgroundEffects(highs, highMids, mids, bass) {
         if (!elements.backgroundOverlay) {
             return;
         }
@@ -433,6 +454,94 @@
         document.documentElement.style.setProperty('--bg-hue', `${bgHue}deg`);
         document.documentElement.style.setProperty('--bg-saturation', bgSaturation);
         document.documentElement.style.setProperty('--bg-brightness', bgBrightness);
+
+        // Animar ondas SVG con el audio
+        animateWaves(bass, mids, highs);
+    }
+
+    /**
+     * Anima las ondas SVG basándose en el audio - VERSIÓN EXTRAVAGANTE
+     * @param {number} bass - Intensidad de bajos (0-1)
+     * @param {number} mids - Intensidad de medios (0-1)
+     * @param {number} highs - Intensidad de agudos (0-1)
+     */
+    function animateWaves(bass, mids, highs) {
+        const waveSvg = document.getElementById('waveSvg');
+        const wave1 = document.getElementById('wave1');
+        const wave2 = document.getElementById('wave2');
+        const wave3 = document.getElementById('wave3');
+        
+        if (!waveSvg || !wave1 || !wave2 || !wave3) return;
+
+        // Opacidad del SVG basada en la intensidad general
+        const overallIntensity = (bass * 0.4) + (mids * 0.3) + (highs * 0.3);
+        const waveOpacity = 0.5 + (overallIntensity * 0.5); // 0.5 a 1.0
+        waveSvg.style.opacity = waveOpacity;
+
+        // Escala DRAMÁTICA del SVG (pulsa con los bajos)
+        const waveScale = 1 + (bass * 0.3) + (mids * 0.15); // 1.0 a 1.45
+        waveSvg.style.transform = `scale(${waveScale})`;
+
+        // Cambiar colores de los gradientes dinámicamente con MAYOR RANGO
+        const hue1 = 10 + (bass * 50); // Rojo a naranja intenso
+        const hue2 = 25 + (mids * 60); // Naranja a amarillo
+        const hue3 = 40 + (highs * 70); // Amarillo a verde-amarillo
+
+        // Actualizar los stops de gradiente con MÁS OPACIDAD
+        const gradients = ['waveGradient1', 'waveGradient2', 'waveGradient3'];
+        const hues = [hue1, hue2, hue3];
+        
+        gradients.forEach((gradId, idx) => {
+            const grad = document.getElementById(gradId);
+            if (grad) {
+                const stops = grad.querySelectorAll('stop');
+                const intensity = idx === 0 ? bass : idx === 1 ? mids : highs;
+                const baseOpacity = 0.3 + (intensity * 0.5); // 0.3 a 0.8
+                
+                stops.forEach((stop, stopIdx) => {
+                    // Variar opacidad entre stops para efecto más dramático
+                    const stopOpacity = baseOpacity * (stopIdx === 1 ? 1.2 : 1);
+                    const saturation = 80 + (intensity * 20); // 80% a 100%
+                    const lightness = 50 + (intensity * 20); // 50% a 70%
+                    const color = `hsla(${hues[idx]}, ${saturation}%, ${lightness}%, ${stopOpacity})`;
+                    stop.setAttribute('style', `stop-color:${color};stop-opacity:1`);
+                });
+            }
+        });
+
+        // ANIMACIÓN DINÁMICA DE LAS ONDAS - Modificar los paths en tiempo real
+        // Amplitudes MUCHO más dramáticas
+        const amp1 = 60 + (bass * 120); // 60 a 180
+        const amp2 = 50 + (mids * 100); // 50 a 150
+        const amp3 = 40 + (highs * 80); // 40 a 120
+
+        // Frecuencia de oscilación (cuánto se curva la onda)
+        const freq1 = 360 + (bass * 100);
+        const freq2 = 360 + (mids * 80);
+        const freq3 = 360 + (highs * 60);
+
+        // Actualizar paths dinámicamente para movimiento más dramático
+        const y1Base = 160;
+        const y2Base = 200;
+        const y3Base = 240;
+
+        // Onda 1 - Reacciona FUERTE a los bajos
+        const y1Control = y1Base - amp1;
+        wave1.setAttribute('d', 
+            `M0,${y1Base} Q${freq1},${y1Control} 720,${y1Base} T1440,${y1Base} L1440,320 L0,320 Z`
+        );
+
+        // Onda 2 - Reacciona a los medios
+        const y2Control = y2Base - amp2;
+        wave2.setAttribute('d', 
+            `M0,${y2Base} Q${freq2},${y2Control} 720,${y2Base} T1440,${y2Base} L1440,320 L0,320 Z`
+        );
+
+        // Onda 3 - Reacciona a los agudos
+        const y3Control = y3Base - amp3;
+        wave3.setAttribute('d', 
+            `M0,${y3Base} Q${freq3},${y3Control} 720,${y3Base} T1440,${y3Base} L1440,320 L0,320 Z`
+        );
     }
 
     /**
@@ -492,6 +601,61 @@
         state.volumeDisplayTimeout = setTimeout(() => {
             volumeIndicator.classList.remove('show');
         }, 2000);
+    }
+
+    /**
+     * Inicia la rotación de slogans históricos
+     */
+    function startSloganRotation() {
+        const sloganText = document.getElementById('sloganText');
+        if (!sloganText) return;
+
+        // Empezar en posición aleatoria
+        state.currentSloganIndex = Math.floor(Math.random() * SLOGANS.length);
+        updateSlogan();
+
+        // Rotar cada 8 segundos
+        state.sloganInterval = setInterval(() => {
+            state.currentSloganIndex = (state.currentSloganIndex + 1) % SLOGANS.length;
+            updateSlogan();
+        }, 8000);
+    }
+
+    /**
+     * Actualiza el slogan con animación de fade
+     */
+    function updateSlogan() {
+        const sloganText = document.getElementById('sloganText');
+        if (!sloganText) return;
+
+        const slogan = SLOGANS[state.currentSloganIndex];
+        
+        // Fade out
+        sloganText.classList.add('fade-out');
+        
+        setTimeout(() => {
+            // Cambiar texto - siempre "Desde el 2009" + frase rotativa
+            sloganText.textContent = `Desde el 2009 ${slogan}`;
+            
+            // Fade in
+            sloganText.classList.remove('fade-out');
+            sloganText.classList.add('fade-in');
+            
+            // Limpiar clase fade-in después de la animación
+            setTimeout(() => {
+                sloganText.classList.remove('fade-in');
+            }, 500);
+        }, 500);
+    }
+
+    /**
+     * Detiene la rotación de slogans
+     */
+    function stopSloganRotation() {
+        if (state.sloganInterval) {
+            clearInterval(state.sloganInterval);
+            state.sloganInterval = null;
+        }
     }
 
     /**
@@ -1280,6 +1444,7 @@
         updateSongInfo();
         setInterval(updateSongInfo, CONFIG.UPDATE_INTERVAL);
         initializeAutoplay();
+        startSloganRotation(); // Iniciar rotación de frases históricas
     }
 
     // Iniciar cuando el DOM esté listo

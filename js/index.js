@@ -164,7 +164,7 @@
         { text: 'dale play antes que me enoje', emoji: '😤' },
         { text: 'que tanto color con el play?', emoji: '🤷' },
         { text: 'dale play o te banneo', emoji: '⛔' },
-        { text: 'apreta el play porfiaaaaa', emoji: '🥺' }
+        { text: 'apreta el play porfaaaaa', emoji: '🥺' }
     ];
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
@@ -172,10 +172,25 @@
 
     /**
      * Inicializa el contexto de audio y el analizador para visualización
+     * NOTA: Requiere CORS en el servidor de streaming
      */
     function initializeAudioVisualizer() {
         if (state.audioContext) {
             return; // Ya está inicializado
+        }
+
+        // IMPORTANTE: Sin CORS no podemos usar Web Audio API
+        // Verificar si el elemento audio tiene crossorigin configurado
+        if (!elements.audio.crossOrigin) {
+            console.warn('⚠️ Visualizador de audio deshabilitado: el servidor no tiene CORS configurado');
+            console.log('ℹ️ El audio funciona normalmente, pero sin efectos visuales reactivos');
+            console.log('💡 Para habilitar efectos visuales, configura CORS en tu servidor de streaming');
+            
+            // Usar animación CSS simple en lugar del visualizador
+            if (elements.logo) {
+                elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
+            }
+            return;
         }
 
         try {

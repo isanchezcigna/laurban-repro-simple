@@ -171,23 +171,63 @@
     const elements = {};
 
     /**
+     * Detecta si estamos en un dispositivo móvil
+     */
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+    }
+
+    /**
+     * Detecta si estamos en desarrollo local (localhost o IP local)
+     */
+    function isLocalDevelopment() {
+        const hostname = window.location.hostname;
+        return hostname === 'localhost' || 
+               hostname === '127.0.0.1' || 
+               hostname.startsWith('192.168.') || 
+               hostname.startsWith('10.') || 
+               hostname.startsWith('172.') ||
+               hostname.endsWith('.local');
+    }
+
+    /**
      * Inicializa el contexto de audio y el analizador para visualización
-     * NOTA: Requiere CORS en el servidor de streaming
+     * NOTA: Requiere CORS en el servidor de streaming para funcionar óptimamente
+     * En móviles o desarrollo local, se deshabilita automáticamente para evitar problemas de CORS
      */
     function initializeAudioVisualizer() {
         if (state.audioContext) {
             return; // Ya está inicializado
         }
 
-        // IMPORTANTE: Sin CORS no podemos usar Web Audio API
-        // Verificar si el elemento audio tiene crossorigin configurado
-        if (!elements.audio.crossOrigin) {
-            console.warn('⚠️ Visualizador de audio deshabilitado: el servidor no tiene CORS configurado');
-            console.log('ℹ️ El audio funciona normalmente, pero sin efectos visuales reactivos');
-            console.log('💡 Para habilitar efectos visuales, configura CORS en tu servidor de streaming');
+        // En móviles o desarrollo local, NO inicializar el visualizador
+        // Esto evita que el audio se silencie por problemas de CORS
+        if (isMobileDevice()) {
+            console.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para evitar problemas de CORS');
+            console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
+            console.log('💡 Usa animación CSS simple en su lugar');
             
-            // Usar animación CSS simple en lugar del visualizador
+            state.isVisualizerActive = true; // Para que las funciones de visualización sepan que está "activo"
+            
+            // Aplicar animación CSS simple
             if (elements.logo) {
+                elements.logo.classList.add('active');
+                elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
+            }
+            return;
+        }
+
+        if (isLocalDevelopment()) {
+            console.warn('🔧 Desarrollo local detectado - Visualizador deshabilitado (sin CORS)');
+            console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
+            console.log('💡 Sube a producción (https://laurban.cl) para ver efectos completos');
+            
+            state.isVisualizerActive = true;
+            
+            // Aplicar animación CSS simple
+            if (elements.logo) {
+                elements.logo.classList.add('active');
                 elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
             }
             return;
@@ -205,11 +245,20 @@
             state.analyser.minDecibels = -90;
             state.analyser.maxDecibels = -10;
             
-            // Conectar el elemento de audio al analizador
+            // Intentar conectar el elemento de audio al analizador
+            // Esto puede fallar si hay problemas de CORS
             if (!state.audioSource) {
-                state.audioSource = state.audioContext.createMediaElementSource(elements.audio);
-                state.audioSource.connect(state.analyser);
-                state.analyser.connect(state.audioContext.destination);
+                try {
+                    state.audioSource = state.audioContext.createMediaElementSource(elements.audio);
+                    state.audioSource.connect(state.analyser);
+                    state.analyser.connect(state.audioContext.destination);
+                    console.log('✅ Audio source conectado al visualizador');
+                } catch (corsError) {
+                    console.warn('⚠️ No se pudo conectar el audio al visualizador (CORS):', corsError.message);
+                    console.log('ℹ️ El audio funcionará, pero sin análisis de frecuencias en tiempo real');
+                    // No crear el source - dejar que el audio se reproduzca normalmente
+                    state.audioSource = null;
+                }
             }
             
             state.isVisualizerActive = true;
@@ -246,9 +295,19 @@
 
     /**
      * Anima el logo basándose en la frecuencia del audio con detección de kick mejorada
+     * Si no hay analyser disponible (por CORS), usa animación basada en tiempo
      */
     function startLogoVisualization() {
-        if (!state.isVisualizerActive || !state.analyser) {
+        if (!state.isVisualizerActive) {
+            return;
+        }
+
+        // Si no hay analyser (problema de CORS), usar animación simple basada en tiempo
+        if (!state.analyser || !state.audioSource) {
+            console.log('ℹ️ Usando animación simple (sin análisis de audio)');
+            if (elements.logo) {
+                elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
+            }
             return;
         }
 
@@ -413,9 +472,17 @@
 
     /**
      * Anima el background basándose en la frecuencia del audio
+     * Si no hay analyser disponible (por CORS), usa animación suave constante
      */
     function startBackgroundVisualization() {
-        if (!state.isVisualizerActive || !state.analyser) {
+        if (!state.isVisualizerActive) {
+            return;
+        }
+
+        // Si no hay analyser (problema de CORS), usar animación suave constante
+        if (!state.analyser || !state.audioSource) {
+            console.log('ℹ️ Usando animación de fondo simple (sin análisis de audio)');
+            // Las olas ya tienen su movimiento suave en CSS/JS
             return;
         }
 

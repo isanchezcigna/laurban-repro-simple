@@ -107,8 +107,8 @@
         WHATSAPP_URL: 'whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz',
         DEFAULT_TITLE: 'La Urban · Emisora Online',
         DEFAULT_COVER: 'https://laurban.cl/img/default.jpg',
-        UPDATE_INTERVAL: 10000, // Actualización cada 10 segundos para cambios rápidos
-        INITIAL_DELAY: 1000,
+        UPDATE_INTERVAL: 5000, // Actualización cada 5 segundos para respuesta más rápida
+        INITIAL_DELAY: 500, // Delay inicial más rápido
         RETRY_DELAY: 2000,
         THEME_LIGHT_START: 6,
         THEME_LIGHT_END: 18
@@ -465,8 +465,8 @@
             return;
         }
 
-        // Opacidad MUCHO MÁS visible - debe notarse claramente
-        const opacity = 0.5 + (highs * 0.7) + (highMids * 0.3); // 0.5 a 1.5 (MUY VISIBLE!)
+        // Opacidad ULTRA SUTIL - apenas perceptible
+        const opacity = 0.09 + (highs * 0.3) + (highMids * 0.15); // 0.02 a 0.065 (ULTRA SUTIL!)
         
         // Hue shift MÁS DRAMÁTICO
         const hueShift = (highs * 60) - (mids * 20); // -20 a +60 grados
@@ -480,8 +480,8 @@
         // Scale más pronunciado
         const scale = 1 + (highs * 0.18) + (highMids * 0.09); // 1.0 a 1.27
         
-        // Aplicar filtros - AHORA MUY VISIBLES
-        elements.backgroundOverlay.style.opacity = Math.min(opacity, 1.0);
+        // Aplicar filtros - Opacity muy sutil, otros efectos visibles
+        elements.backgroundOverlay.style.opacity = opacity;
         elements.backgroundOverlay.style.filter = `brightness(${brightness}) saturate(${saturation}) hue-rotate(${hueShift}deg)`;
         elements.backgroundOverlay.style.transform = `scale(${scale})`;
         
@@ -521,10 +521,22 @@
         const waveScale = 1 + (bass * 0.3) + (mids * 0.15); // 1.0 a 1.45
         waveSvg.style.transform = `scale(${waveScale})`;
 
-        // Cambiar colores de los gradientes dinámicamente con MAYOR RANGO
-        const hue1 = 10 + (bass * 50); // Rojo a naranja intenso
-        const hue2 = 25 + (mids * 60); // Naranja a amarillo
-        const hue3 = 40 + (highs * 70); // Amarillo a verde-amarillo
+        // Determinar si es tema día o noche
+        const isDaytime = document.body.classList.contains('theme-day');
+        
+        // Rangos de HUE según el tema
+        let hue1, hue2, hue3;
+        if (isDaytime) {
+            // Modo DÍA: Naranjas y amarillos (10-50)
+            hue1 = 10 + (bass * 30);   // Rojo-naranja a naranja
+            hue2 = 25 + (mids * 35);   // Naranja a amarillo
+            hue3 = 40 + (highs * 30);  // Amarillo brillante
+        } else {
+            // Modo NOCHE: Cyans y azules (180-210)
+            hue1 = 180 + (bass * 15);  // Cyan
+            hue2 = 195 + (mids * 10);  // Cyan-azul
+            hue3 = 200 + (highs * 10); // Azul
+        }
 
         // Actualizar los stops de gradiente con MÁS OPACIDAD
         const gradients = ['waveGradient1', 'waveGradient2', 'waveGradient3'];
@@ -777,7 +789,7 @@
         }
         
         if (elements.backgroundOverlay) {
-            elements.backgroundOverlay.style.opacity = '0.4';
+            elements.backgroundOverlay.style.opacity = '0.02'; // Ultra sutil en reposo
             elements.backgroundOverlay.style.filter = '';
             elements.backgroundOverlay.style.transform = '';
         }
@@ -796,11 +808,60 @@
         const hour = new Date().getHours();
         const isDaytime = hour >= CONFIG.THEME_LIGHT_START && hour < CONFIG.THEME_LIGHT_END;
         
+        // Cambiar fondo
         document.body.style.background = isDaytime
             ? 'linear-gradient(135deg, #f89200, #facc22)'
             : 'linear-gradient(to bottom, rgba(2,7,29) 0%,rgb(8, 30, 77) 100%)';
         
+        // Agregar/quitar clase para cambiar colores de acento
+        if (isDaytime) {
+            document.body.classList.add('theme-day');
+            updateWaveColors('#fc5e16', '#fc9e16', '#ffc832'); // Naranja/Amarillo
+        } else {
+            document.body.classList.remove('theme-day');
+            updateWaveColors('#00d9ff', '#0099ff', '#00ffff'); // Cyan/Azul
+        }
+        
         console.log(`🌅 Tema actualizado: ${isDaytime ? 'DÍA' : 'NOCHE'} (hora actual: ${hour}:00)`);
+    }
+
+    /**
+     * Actualiza los colores de las ondas SVG según el tema
+     */
+    function updateWaveColors(color1, color2, color3) {
+        // Convertir hex a rgba
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // Gradiente 1
+        const gradient1 = document.querySelectorAll('#waveGradient1 stop');
+        if (gradient1.length >= 3) {
+            gradient1[0].style.stopColor = hexToRgba(color1, 0.4);
+            gradient1[1].style.stopColor = hexToRgba(color2, 0.5);
+            gradient1[2].style.stopColor = hexToRgba(color3, 0.4);
+        }
+
+        // Gradiente 2
+        const gradient2 = document.querySelectorAll('#waveGradient2 stop');
+        if (gradient2.length >= 3) {
+            gradient2[0].style.stopColor = hexToRgba(color3, 0.3);
+            gradient2[1].style.stopColor = hexToRgba(color2, 0.4);
+            gradient2[2].style.stopColor = hexToRgba(color1, 0.3);
+        }
+
+        // Gradiente 3
+        const gradient3 = document.querySelectorAll('#waveGradient3 stop');
+        if (gradient3.length >= 3) {
+            gradient3[0].style.stopColor = hexToRgba(color2, 0.25);
+            gradient3[1].style.stopColor = hexToRgba(color3, 0.3);
+            gradient3[2].style.stopColor = hexToRgba(color1, 0.25);
+        }
+
+        console.log(`🌊 Colores de ondas actualizados: ${color1}, ${color2}, ${color3}`);
     }
 
     /**
@@ -988,7 +1049,10 @@
      */
     async function getRadioData() {
         try {
-            const response = await fetch(CONFIG.API_URL);
+            // Agregar timestamp para evitar cache y obtener datos frescos
+            // NO usamos headers custom para evitar problemas de CORS preflight
+            const timestamp = new Date().getTime();
+            const response = await fetch(`${CONFIG.API_URL}?_=${timestamp}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -1179,6 +1243,11 @@
 
         // Detectar cambio de canción por ID
         const songChanged = state.lastSongId !== null && state.lastSongId !== songId;
+        
+        if (songChanged) {
+            console.log(`🎵 Nueva canción: ${mainArtist} - ${formattedTitle}`);
+        }
+        
         state.lastSongId = songId;
 
         if (!state.showingKickVideo && elements.cover) {
@@ -1550,8 +1619,13 @@
         setupEventListeners();
         setThemeByTime();
         enableChatCanvas();
+        
+        // Primera actualización inmediata sin delay
         updateSongInfo();
+        
+        // Actualizaciones periódicas cada 5 segundos
         setInterval(updateSongInfo, CONFIG.UPDATE_INTERVAL);
+        
         initializeAutoplay();
         startSloganRotation(); // Iniciar rotación de frases históricas
         
@@ -1560,6 +1634,9 @@
         
         // Ocultar pantalla de carga después de que todo esté listo
         hideLoadingScreen();
+        
+        console.log('🎵 La Urban Player inicializado');
+        console.log(`⏱️ Actualización de info cada ${CONFIG.UPDATE_INTERVAL/1000} segundos`);
     }
 
     /**

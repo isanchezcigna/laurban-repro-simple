@@ -499,7 +499,8 @@
     }
 
     /**
-     * Anima las ondas SVG basándose en el audio - VERSIÓN EXTRAVAGANTE
+     * Anima las ondas SVG basándose en el audio - Movimiento suave como el mar
+     * Mantiene morfología original con movimiento fluido constante
      * @param {number} bass - Intensidad de bajos (0-1)
      * @param {number} mids - Intensidad de medios (0-1)
      * @param {number} highs - Intensidad de agudos (0-1)
@@ -512,17 +513,20 @@
         
         if (!waveSvg || !wave1 || !wave2 || !wave3) return;
 
-        // Opacidad del SVG basada en la intensidad general
-        const overallIntensity = (bass * 0.4) + (mids * 0.3) + (highs * 0.3);
-        const waveOpacity = 0.5 + (overallIntensity * 0.5); // 0.5 a 1.0
-        waveSvg.style.opacity = waveOpacity;
-
-        // Escala DRAMÁTICA del SVG (pulsa con los bajos)
-        const waveScale = 1 + (bass * 0.3) + (mids * 0.15); // 1.0 a 1.45
-        waveSvg.style.transform = `scale(${waveScale})`;
-
         // Determinar si es tema día o noche
         const isDaytime = document.body.classList.contains('theme-day');
+
+        // Opacidad suave - ajustada según el tema
+        const overallIntensity = (bass * 0.4) + (mids * 0.3) + (highs * 0.3);
+        // Modo noche: más sutil (0.25 a 0.45), Modo día: más visible (0.6 a 0.9)
+        const baseOpacity = isDaytime ? 0.6 : 0.25;
+        const maxOpacityBoost = isDaytime ? 0.3 : 0.2;
+        const waveOpacity = baseOpacity + (overallIntensity * maxOpacityBoost);
+        waveSvg.style.opacity = waveOpacity;
+
+        // Escala MUY SUTIL - solo un ligero pulso con los bajos
+        const waveScale = 1 + (bass * 0.08); // 1.0 a 1.08 (mucho más sutil)
+        waveSvg.style.transform = `scale(${waveScale})`;
         
         // Rangos de HUE según el tema
         let hue1, hue2, hue3;
@@ -538,7 +542,7 @@
             hue3 = 200 + (highs * 10); // Azul
         }
 
-        // Actualizar los stops de gradiente con MÁS OPACIDAD
+        // Actualizar los stops de gradiente
         const gradients = ['waveGradient1', 'waveGradient2', 'waveGradient3'];
         const hues = [hue1, hue2, hue3];
         
@@ -547,49 +551,65 @@
             if (grad) {
                 const stops = grad.querySelectorAll('stop');
                 const intensity = idx === 0 ? bass : idx === 1 ? mids : highs;
-                const baseOpacity = 0.3 + (intensity * 0.5); // 0.3 a 0.8
+                // Modo noche: más transparente (0.15 a 0.35), Modo día: normal (0.3 a 0.6)
+                const baseOpacityMin = isDaytime ? 0.3 : 0.15;
+                const baseOpacityRange = isDaytime ? 0.3 : 0.2;
+                const baseOpacity = baseOpacityMin + (intensity * baseOpacityRange);
                 
                 stops.forEach((stop, stopIdx) => {
-                    // Variar opacidad entre stops para efecto más dramático
-                    const stopOpacity = baseOpacity * (stopIdx === 1 ? 1.2 : 1);
-                    const saturation = 80 + (intensity * 20); // 80% a 100%
-                    const lightness = 50 + (intensity * 20); // 50% a 70%
+                    const stopOpacity = baseOpacity * (stopIdx === 1 ? 1.1 : 1);
+                    const saturation = 80 + (intensity * 15); // 80% a 95%
+                    const lightness = 50 + (intensity * 15); // 50% a 65%
                     const color = `hsla(${hues[idx]}, ${saturation}%, ${lightness}%, ${stopOpacity})`;
                     stop.setAttribute('style', `stop-color:${color};stop-opacity:1`);
                 });
             }
         });
 
-        // ANIMACIÓN DINÁMICA DE LAS ONDAS - Modificar los paths en tiempo real
-        // Amplitudes MUCHO más dramáticas
-        const amp1 = 60 + (bass * 120); // 60 a 180
-        const amp2 = 50 + (mids * 100); // 50 a 150
-        const amp3 = 40 + (highs * 80); // 40 a 120
+        // MOVIMIENTO SUAVE COMO EL MAR - Mantiene forma original
+        // Usar tiempo para crear movimiento continuo y fluido
+        const time = Date.now() * 0.001; // Convertir a segundos
+        
+        // Amplitudes FIJAS base (forma original) con ligera intensificación musical
+        const baseAmp1 = 30; // Amplitud base ola 1
+        const baseAmp2 = 25; // Amplitud base ola 2
+        const baseAmp3 = 20; // Amplitud base ola 3
+        
+        // La música solo intensifica ligeramente el movimiento natural
+        const amp1 = baseAmp1 + (bass * 15); // 30 a 45 (mucho más controlado)
+        const amp2 = baseAmp2 + (mids * 12); // 25 a 37
+        const amp3 = baseAmp3 + (highs * 10); // 20 a 30
 
-        // Frecuencia de oscilación (cuánto se curva la onda)
-        const freq1 = 360 + (bass * 100);
-        const freq2 = 360 + (mids * 80);
-        const freq3 = 360 + (highs * 60);
+        // Frecuencia FIJA para mantener la morfología
+        const freq1 = 360; // Fija
+        const freq2 = 360; // Fija
+        const freq3 = 360; // Fija
 
-        // Actualizar paths dinámicamente para movimiento más dramático
+        // Posiciones base fijas
         const y1Base = 160;
         const y2Base = 200;
         const y3Base = 240;
 
-        // Onda 1 - Reacciona FUERTE a los bajos
-        const y1Control = y1Base - amp1;
+        // Movimiento sinusoidal suave como el mar (siempre activo)
+        // Cada ola se mueve a diferente velocidad para efecto más natural
+        const wave1Offset = Math.sin(time * 0.5) * amp1;
+        const wave2Offset = Math.sin(time * 0.4 + 1) * amp2; // Desfasado
+        const wave3Offset = Math.sin(time * 0.3 + 2) * amp3; // Más desfasado
+
+        // Onda 1 - Movimiento suave continuo
+        const y1Control = y1Base - wave1Offset;
         wave1.setAttribute('d', 
             `M0,${y1Base} Q${freq1},${y1Control} 720,${y1Base} T1440,${y1Base} L1440,320 L0,320 Z`
         );
 
-        // Onda 2 - Reacciona a los medios
-        const y2Control = y2Base - amp2;
+        // Onda 2 - Movimiento suave continuo
+        const y2Control = y2Base - wave2Offset;
         wave2.setAttribute('d', 
             `M0,${y2Base} Q${freq2},${y2Control} 720,${y2Base} T1440,${y2Base} L1440,320 L0,320 Z`
         );
 
-        // Onda 3 - Reacciona a los agudos
-        const y3Control = y3Base - amp3;
+        // Onda 3 - Movimiento suave continuo
+        const y3Control = y3Base - wave3Offset;
         wave3.setAttribute('d', 
             `M0,${y3Base} Q${freq3},${y3Control} 720,${y3Base} T1440,${y3Base} L1440,320 L0,320 Z`
         );
@@ -1544,6 +1564,7 @@
         // Audio playing - asegurar que el visualizador esté activo
         elements.audio.addEventListener('playing', () => {
             console.log('🎵 Audio playing event');
+            document.body.classList.add('audio-playing'); // Mostrar olas SVG
             updateCustomPlayButton();
             if (!state.audioContext) {
                 setTimeout(() => {
@@ -1557,6 +1578,7 @@
         // Audio paused - suspender visualizador
         elements.audio.addEventListener('pause', () => {
             console.log('⏸️ Audio paused event');
+            document.body.classList.remove('audio-playing'); // Ocultar olas SVG
             updateCustomPlayButton();
             if (state.audioContext && state.audioContext.state === 'running') {
                 state.audioContext.suspend();

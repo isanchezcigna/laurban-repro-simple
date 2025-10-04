@@ -989,14 +989,20 @@
      */
     async function playAudio() {
         try {
-            // Establecer la fuente solo si no está configurada
+            console.log('🎵 playAudio() llamado');
+            
+            // Establecer la fuente solo si no está configurada o es inválida
             if (!elements.audio.src || elements.audio.src === window.location.href || elements.audio.src === '') {
                 console.log('🎵 Configurando stream URL:', CONFIG.STREAM_URL);
                 elements.audio.src = CONFIG.STREAM_URL;
-                // Cargar el audio
+            }
+            
+            // En móviles, es importante cargar explícitamente
+            if (elements.audio.readyState < 2) { // HAVE_CURRENT_DATA
+                console.log('🎵 Cargando audio...');
                 elements.audio.load();
-                // Pequeña pausa para que el navegador procese el src
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Esperar un poco más en móviles para que cargue
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
             
             // Fade-in suave en primera reproducción para evitar sustos
@@ -1008,7 +1014,20 @@
             }
             
             console.log('▶️ Iniciando reproducción...');
-            await elements.audio.play();
+            console.log('📊 Estado del audio:', {
+                readyState: elements.audio.readyState,
+                networkState: elements.audio.networkState,
+                src: elements.audio.src
+            });
+            
+            // Crear una promesa con timeout para evitar que se quede colgado
+            const playPromise = elements.audio.play();
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout: El audio tardó demasiado en cargar')), 10000)
+            );
+            
+            await Promise.race([playPromise, timeoutPromise]);
+            
             state.userPaused = false;
             state.retryCount = 0; // Resetear contador de reintentos
             console.log('✅ Audio reproduciendo correctamente');
@@ -1591,6 +1610,24 @@
             if (elements.audio.error) {
                 console.error('Código de error:', elements.audio.error.code);
                 console.error('Mensaje:', elements.audio.error.message);
+                
+                // Códigos de error específicos
+                switch (elements.audio.error.code) {
+                    case 1: // MEDIA_ERR_ABORTED
+                        console.error('❌ Carga abortada por el usuario');
+                        break;
+                    case 2: // MEDIA_ERR_NETWORK
+                        console.error('❌ Error de red al cargar el stream');
+                        console.warn('💡 Verifica tu conexión a internet');
+                        break;
+                    case 3: // MEDIA_ERR_DECODE
+                        console.error('❌ Error al decodificar el audio');
+                        break;
+                    case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+                        console.error('❌ Formato de stream no soportado o URL inválida');
+                        console.warn('💡 URL del stream:', elements.audio.src);
+                        break;
+                }
             }
         });
 
@@ -1607,6 +1644,26 @@
         // Audio canplay
         elements.audio.addEventListener('canplay', () => {
             console.log('✅ Audio listo para reproducir');
+        });
+        
+        // Audio canplaythrough
+        elements.audio.addEventListener('canplaythrough', () => {
+            console.log('✅ Audio puede reproducirse sin interrupciones');
+        });
+        
+        // Audio loadstart
+        elements.audio.addEventListener('loadstart', () => {
+            console.log('📥 Comenzando a cargar el stream...');
+        });
+        
+        // Audio loadedmetadata
+        elements.audio.addEventListener('loadedmetadata', () => {
+            console.log('📊 Metadata del stream cargada');
+        });
+        
+        // Audio loadeddata
+        elements.audio.addEventListener('loadeddata', () => {
+            console.log('📦 Primeros datos del stream cargados');
         });
 
         // Audio ended

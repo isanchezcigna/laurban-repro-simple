@@ -104,7 +104,7 @@
         KICK_EMBED_URL: 'https://player.kick.com/laurban?muted=true&autoplay=true',
         REQUEST_IFRAME_URL: 'https://azura.laurban.cl/public/laurban/embed-requests?theme=dark',
         CHAT_IFRAME_URL: 'https://www3.cbox.ws/box/?boxid=3539409&boxtag=Q2vpWH',
-        WHATSAPP_URL: 'whatsapp://send/?phone=+56949242000&abid=+56949242000&text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz',
+        WHATSAPP_URL: 'whatsapp://wa.me/+56949242000?text=Escribe%20aca%20tu%20saludo%20y%20pedido%20musical.%20Tambien%20puedes%20enviar%20mensaje%20de%20voz',
         DEFAULT_TITLE: 'La Urban · Emisora Online',
         DEFAULT_COVER: 'https://laurban.cl/img/default.jpg',
         UPDATE_INTERVAL: 5000, // Actualización cada 5 segundos para respuesta más rápida
@@ -213,8 +213,14 @@
             console.log('🎵 Detección de kick/bass optimizada para música urbana');
             
         } catch (error) {
-            console.warn('⚠️ No se pudo inicializar el visualizador de audio (probablemente CORS):', error.message);
+            console.warn('⚠️ No se pudo inicializar el visualizador de audio:', error.message);
             console.log('ℹ️ El audio seguirá funcionando normalmente sin efectos visuales');
+            
+            // Limpiar el audioSource si falla para evitar problemas
+            state.audioSource = null;
+            state.audioContext = null;
+            state.analyser = null;
+            state.isVisualizerActive = false;
             
             // Aplicar animación CSS alternativa si el visualizador falla
             if (elements.logo) {

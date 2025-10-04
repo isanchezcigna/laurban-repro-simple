@@ -108,29 +108,46 @@
     
     <!-- Overlay animado para el background -->
     <div id="backgroundOverlay" class="background-overlay"></div>
-    
-    <div class="player-container">
-        <img src="img/logo.png" alt="Logo" class="logo" id="logo">
-        <div class="cover-container">
-            <img id="cover" src="https://laurban.cl/img/default.jpg" alt="Carátula del Álbum" class="cover">
-            <!-- Indicador de volumen sobre el cover -->
-            <div id="volumeIndicator" class="volume-indicator">100%</div>
-        </div>
-        <div class="song-info">
-            <div class="marquee">
-                <span id="song"></span>
+
+    <!-- Pantalla de carga inicial -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <img src="img/logo.png" alt="La Urban Logo">
             </div>
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <p class="loading-text">Cargando la mejor música urbana...</p>
         </div>
-        
-        <!-- Audio element oculto -->
-        <audio id="audio" name="media" preload="none" crossorigin="anonymous">
-            <source type="audio/aac">
-            <source type="audio/mpeg">
-            Tu navegador no soporta el elemento <code>audio</code>.
-        </audio>
-        
-        <!-- Controles personalizados con redes sociales integradas -->
-        <div class="custom-controls">
+    </div>
+    
+    <div class="player-container" id="playerContainer">
+        <!-- Contenido que se difumina -->
+        <div class="player-content" id="playerContent">
+            <img src="img/logo.png" alt="Logo" class="logo" id="logo">
+            <div class="cover-container">
+                <img id="cover" src="https://laurban.cl/img/default.jpg" alt="Carátula del Álbum" class="cover">
+                <!-- Indicador de volumen sobre el cover -->
+                <div id="volumeIndicator" class="volume-indicator">100%</div>
+            </div>
+            <div class="song-info">
+                <div class="marquee">
+                    <span id="song"></span>
+                </div>
+            </div>
+            
+            <!-- Audio element oculto -->
+            <audio id="audio" name="media" preload="none" crossorigin="anonymous">
+                <source type="audio/aac">
+                <source type="audio/mpeg">
+                Tu navegador no soporta el elemento <code>audio</code>.
+            </audio>
+            
+            <!-- Controles personalizados con redes sociales integradas -->
+            <div class="custom-controls">
             <button id="customPlayBtn" class="control-btn play-pause" aria-label="Play/Pause">
                 <i class="fas fa-play"></i>
             </button>
@@ -176,9 +193,16 @@
         <div class="player-footer">
             <p id="sloganText">Desde el 2009 agudizando tus sentidos</p>
         </div>
+        </div><!-- Fin player-content -->
         
+        <!-- Overlay va FUERA del player-content -->
         <div class="overlay" id="overlay">
-            <button id="playButton" class="play-button"><i class="fas fa-play"></i></button>
+            <div class="play-button-container">
+                <button id="playButton" class="play-button">
+                    <i class="fas fa-play"></i>
+                </button>
+                <p class="play-text" id="playText">Dale play y disfruta <span id="playEmoji">🎧</span></p>
+            </div>
         </div>
     </div>
 

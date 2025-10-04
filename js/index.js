@@ -14,6 +14,8 @@
         if (message.includes('Extension context invalidated') ||
             message.includes('message port closed') ||
             message.includes('Receiving end does not exist') ||
+            message.includes('message channel closed') ||
+            message.includes('asynchronous response') ||
             message.includes('chrome.runtime')) {
             return; // Silenciar completamente
         }
@@ -70,7 +72,23 @@
         if (e.message && (
             e.message.includes('Extension context invalidated') ||
             e.message.includes('message port closed') ||
+            e.message.includes('message channel closed') ||
+            e.message.includes('asynchronous response') ||
             e.message.includes('chrome.runtime')
+        )) {
+            e.preventDefault();
+            e.stopPropagation();
+            return true;
+        }
+    }, true);
+
+    // Capturar promesas rechazadas (para el error específico que mencionas)
+    window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && e.reason.message && (
+            e.reason.message.includes('message channel closed') ||
+            e.reason.message.includes('asynchronous response') ||
+            e.reason.message.includes('Extension context') ||
+            e.reason.message.includes('chrome.runtime')
         )) {
             e.preventDefault();
             e.stopPropagation();
@@ -115,7 +133,9 @@
         volumeFadeInterval: null, // Intervalo para el fade de volumen
         volumeDisplayTimeout: null, // Timeout para ocultar el porcentaje de volumen
         currentSloganIndex: 0, // Índice del slogan actual
-        sloganInterval: null // Intervalo para cambiar slogans
+        sloganInterval: null, // Intervalo para cambiar slogans
+        currentPlayMessageIndex: 0, // Índice del mensaje de play actual
+        playMessageInterval: null // Intervalo para cambiar mensajes de play
     };
 
     // Frases históricas de La Urban
@@ -126,6 +146,25 @@
         'un hit en tu ventana',
         'sounds good',
         'se vienen cositas'
+    ];
+
+    // Frases insistentes chilenas para el botón de play 😄
+    const PLAY_MESSAGES = [
+        { text: 'Dale play y disfruta', emoji: '🎧' },
+        { text: 'dale play no seas tímido', emoji: '😳' },
+        { text: 'dale play mojojojo', emoji: '🐵' },
+        { text: 'dale play o andai roando?', emoji: '🔪' },
+        { text: 'dale play o andai laando?', emoji: '🧼' },
+        { text: 'oye y el play pa cuándo?', emoji: '⏰' },
+        { text: 'dale play po compadre', emoji: '🤠' },
+        { text: 'apreta el play o te sapeo', emoji: '👀' },
+        { text: 'dale play y ponte vío', emoji: '😎' },
+        { text: 'el play se va a poner solito?', emoji: '🤔' },
+        { text: 'apreta esa wea de play', emoji: '👆' },
+        { text: 'dale play antes que me enoje', emoji: '😤' },
+        { text: 'que tanto color con el play?', emoji: '🤷' },
+        { text: 'dale play o te banneo', emoji: '⛔' },
+        { text: 'apreta el play porfiaaaaa', emoji: '🥺' }
     ];
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
@@ -659,6 +698,59 @@
     }
 
     /**
+     * Inicia la rotación de mensajes insistentes para el botón de play 😄
+     */
+    function startPlayMessageRotation() {
+        if (!elements.playText || !elements.playEmoji) return;
+
+        // Empezar con el mensaje inicial por 3 segundos
+        setTimeout(() => {
+            state.currentPlayMessageIndex = 1; // Empezar con el segundo mensaje
+            updatePlayMessage();
+
+            // Rotar mensajes cada 4 segundos después del inicial
+            state.playMessageInterval = setInterval(() => {
+                state.currentPlayMessageIndex = (state.currentPlayMessageIndex + 1) % PLAY_MESSAGES.length;
+                updatePlayMessage();
+            }, 4000);
+        }, 3000);
+    }
+
+    /**
+     * Actualiza el mensaje de play con animación
+     */
+    function updatePlayMessage() {
+        if (!elements.playText || !elements.playEmoji) return;
+
+        const message = PLAY_MESSAGES[state.currentPlayMessageIndex];
+        
+        // Fade out rápido
+        elements.playText.style.opacity = '0';
+        elements.playText.style.transform = 'translateY(-10px)';
+        
+        setTimeout(() => {
+            // Cambiar contenido
+            elements.playText.innerHTML = `${message.text} <span id="playEmoji">${message.emoji}</span>`;
+            elements.playEmoji = document.getElementById('playEmoji'); // Actualizar referencia
+            
+            // Fade in rápido
+            elements.playText.style.opacity = '1';
+            elements.playText.style.transform = 'translateY(0)';
+        }, 300);
+    }
+
+    /**
+     * Detiene la rotación de mensajes de play
+     */
+    function stopPlayMessageRotation() {
+        if (state.playMessageInterval) {
+            clearInterval(state.playMessageInterval);
+            state.playMessageInterval = null;
+        }
+    }
+
+
+    /**
      * Actualiza el slider de volumen con el valor actual
      */
     function updateVolumeSlider() {
@@ -707,6 +799,8 @@
         document.body.style.background = isDaytime
             ? 'linear-gradient(135deg, #f89200, #facc22)'
             : 'linear-gradient(to bottom, rgba(2,7,29) 0%,rgb(8, 30, 77) 100%)';
+        
+        console.log(`🌅 Tema actualizado: ${isDaytime ? 'DÍA' : 'NOCHE'} (hora actual: ${hour}:00)`);
     }
 
     /**
@@ -1244,6 +1338,8 @@
         elements.close2Button = document.getElementById('close2Button');
         elements.song = document.getElementById('song');
         elements.cover = document.getElementById('cover');
+        elements.playText = document.getElementById('playText');
+        elements.playEmoji = document.getElementById('playEmoji');
     }
 
     /**
@@ -1252,9 +1348,19 @@
     function setupEventListeners() {
         // Botón de reproducción inicial (overlay)
         elements.playButton.addEventListener('click', async () => {
+            // Detener mensajes insistentes cuando se hace clic
+            stopPlayMessageRotation();
+            
             await playAudio();
             elements.overlay.style.display = 'none';
             elements.logo.classList.add('active');
+            
+            // Quitar el blur del contenido del reproductor
+            const playerContent = document.getElementById('playerContent');
+            if (playerContent) {
+                playerContent.classList.remove('blurred');
+            }
+            
             updateCustomPlayButton();
         });
 
@@ -1437,6 +1543,9 @@
      * Inicializa la aplicación
      */
     function init() {
+        // Mostrar pantalla de carga
+        showLoadingScreen();
+        
         initializeElements();
         setupEventListeners();
         setThemeByTime();
@@ -1445,6 +1554,51 @@
         setInterval(updateSongInfo, CONFIG.UPDATE_INTERVAL);
         initializeAutoplay();
         startSloganRotation(); // Iniciar rotación de frases históricas
+        
+        // Verificar tema cada 10 minutos por si cambia la hora mientras está abierto
+        setInterval(setThemeByTime, 600000); // 10 minutos = 600000ms
+        
+        // Ocultar pantalla de carga después de que todo esté listo
+        hideLoadingScreen();
+    }
+
+    /**
+     * Muestra la pantalla de carga inicial
+     */
+    function showLoadingScreen() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const playerContent = document.getElementById('playerContent');
+        
+        if (loadingScreen) {
+            loadingScreen.classList.remove('hidden');
+        }
+        
+        if (playerContent) {
+            playerContent.classList.add('blurred');
+        }
+    }
+
+    /**
+     * Oculta la pantalla de carga con animación
+     */
+    function hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const playerContent = document.getElementById('playerContent');
+        
+        // Simular tiempo de carga mínimo para que se vea la animación (1.5 segundos)
+        setTimeout(() => {
+            if (loadingScreen) {
+                loadingScreen.classList.add('hidden');
+            }
+            
+            if (playerContent) {
+                // Mantener el blur hasta que el usuario haga play
+                // playerContent.classList.remove('blurred'); // Se quitará cuando hagan play
+            }
+
+            // Iniciar mensajes insistentes después de ocultar pantalla de carga
+            startPlayMessageRotation();
+        }, 1500);
     }
 
     // Iniciar cuando el DOM esté listo

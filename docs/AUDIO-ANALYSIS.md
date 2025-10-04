@@ -104,6 +104,7 @@ finalScale = baseScale × kickScale × bpmMultiplier
 ```
 
 **Resultado:**
+
 - 🔹 Sin kick: 0.98-1.00 (casi estático)
 - 🔥 Con kick: 1.20-1.25 (¡BOOM!)
 
@@ -114,6 +115,7 @@ rotation = ((mid + highMid) / 2 - 0.5) × 8 × bpmMultiplier
 ```
 
 **Resultado:**
+
 - 🎤 Sigue las voces y melodías
 - 🎵 Se amplifica con BPM más rápido
 - 🌀 Rango: -4° a +4°
@@ -125,6 +127,7 @@ brightness = 1 + (highs × 0.2) + ((kickScale - 1) × 0.5)
 ```
 
 **Resultado:**
+
 - ✨ Hi-hats aumentan brillo sutilmente
 - 💥 Kick produce flash de luz (hasta 1.5x)
 
@@ -136,6 +139,7 @@ saturation = 1 + (avgEnergy × 0.4) + ((kickScale - 1) × 0.3)
 ```
 
 **Resultado:**
+
 - 🎨 Colores más vibrantes con energía alta
 - 🔥 Kick intensifica colores dramáticamente
 
@@ -148,6 +152,7 @@ shadowColor = rgba(252, 94, 22, opacity)  // Naranja La Urban
 ```
 
 **Resultado:**
+
 - 💫 Sombra sutil base: 15px, opacidad 0.4
 - 🔊 Con bass: hasta 35px, opacidad 0.7
 - 🥁 **Con kick: hasta 75px, opacidad 0.9** ⭐ (El efecto más dramático)
@@ -161,6 +166,7 @@ if (kickScale > 1.15) {  // Solo en kicks fuertes
 ```
 
 **Resultado:**
+
 - 🚀 Logo "salta" hasta 5px hacia arriba en kicks fuertes
 - 🎯 Efecto de "bounce" natural
 

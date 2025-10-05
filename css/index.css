@@ -248,45 +248,40 @@ body.theme-day.audio-playing .wave-background {
     z-index: 1;
 }
 
-/* Animaciones para cambio de cover - TRANSICIÓN CONTINUA CON SWAP */
+/* Animaciones para cambio de cover - FADE + ZOOM ELEGANTE */
 .cover.cover-exit {
-    animation: coverExitAnimation 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    animation: coverExitAnimation 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     z-index: 2; /* La que sale debe estar encima */
 }
 
 .cover.cover-enter {
-    animation: coverEnterAnimation 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    animation: coverEnterAnimation 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     z-index: 1; /* La que entra está debajo */
-    opacity: 1 !important; /* Forzar que sea visible durante la animación */
+    opacity: 0 !important; /* Comienza invisible */
 }
 
 @keyframes coverExitAnimation {
     0% {
         opacity: 1;
-        transform: scale(1) rotateY(0deg);
+        transform: scale(1);
         filter: blur(0px) brightness(1);
-    }
-    99% {
-        opacity: 1;
-        transform: scale(0.85) rotateY(90deg);
-        filter: blur(3px) brightness(0.7);
     }
     100% {
         opacity: 0;
-        transform: scale(0.85) rotateY(90deg);
-        filter: blur(3px) brightness(0.7);
+        transform: scale(0.8);
+        filter: blur(2px) brightness(0.8);
     }
 }
 
 @keyframes coverEnterAnimation {
     0% {
-        opacity: 1;
-        transform: scale(0.85) rotateY(-90deg);
-        filter: blur(3px) brightness(0.7);
+        opacity: 0;
+        transform: scale(1.2);
+        filter: blur(2px) brightness(0.8);
     }
     100% {
         opacity: 1;
-        transform: scale(1) rotateY(0deg);
+        transform: scale(1);
         filter: blur(0px) brightness(1);
     }
 }

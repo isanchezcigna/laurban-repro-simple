@@ -1,3 +1,4 @@
+/* IMPORTANTE: CSS actualizado para corregir distorsión de covers - v2.1 */
 :root {
     --bg-hue: 0deg;
     --bg-saturation: 1;
@@ -185,12 +186,12 @@ body.theme-day.audio-playing .wave-background {
 }
 
 .cover {
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
     display: block;
     border-radius: 15px;
-    object-fit: cover;
-    object-position: center;
+    object-fit: contain !important; /* Forzar contain para mantener proporciones */
+    object-position: center !important;
     transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     box-shadow: 
         0 8px 25px rgba(0, 0, 0, 0.4),
@@ -278,13 +279,16 @@ body.theme-day.audio-playing .wave-background {
 
 .cover-container {
     width: 100%;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1 / 1; /* Mantener cuadrado pero con mejor manejo interno */
     position: relative;
     overflow: hidden;
     border-radius: 15px;
-    background: rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 20, 0.9)); /* Mejor fondo gradiente */
     transition: opacity 0.5s ease;
     perspective: 1200px;
+    display: flex !important; /* Forzar flexbox para centrado */
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* Indicador de volumen sobre el cover */
@@ -1737,9 +1741,10 @@ audio::-webkit-media-controls-fullscreen-button {
     html, body {
         height: 100vh;
         height: -webkit-fill-available; /* Para iOS Safari */
-        overflow: hidden; /* Prevenir cualquier scroll */
-        position: fixed; /* Prevenir bounce en iOS */
+        overflow-x: hidden; /* Solo prevenir scroll horizontal */
+        /* Remover position: fixed que interfiere con CSS cache */
         width: 100%;
+        -webkit-overflow-scrolling: touch;
     }
     
     body {
@@ -1748,44 +1753,40 @@ audio::-webkit-media-controls-fullscreen-button {
     }
     
     .player-container {
-        height: 100vh;
-        height: -webkit-fill-available;
-        max-height: 100vh;
-        max-height: -webkit-fill-available;
-        overflow: hidden;
-        padding: 10px;
+        max-height: 95vh; /* Permitir un poco de scroll si es necesario */
+        max-height: calc(-webkit-fill-available * 0.95);
+        overflow-y: auto; /* Permitir scroll interno si es necesario */
+        padding: 15px;
         box-sizing: border-box;
-        justify-content: center;
-        align-items: center;
-        display: flex;
-        flex-direction: column;
+        /* Mantener el layout original del player */
     }
     
-    /* Ajustar el contenido principal para que no se salga */
-    .main-content {
-        max-height: calc(100vh - 20px);
-        max-height: calc(-webkit-fill-available - 20px);
-        overflow: hidden;
+    /* Asegurar que el cover mantenga aspect ratio correcto */
+    .cover-container {
         width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        aspect-ratio: 1 / 1;
+        max-width: 300px; /* Limitar tamaño máximo en móviles */
+        margin: 0 auto;
+    }
+    
+    .cover {
+        width: 100%;
+        height: 100%;
+        object-fit: contain !important;
+        object-position: center !important;
     }
 }
 
 /* ========== OPTIMIZACIONES PARA iOS SAFARI ESPECÍFICAS ========== */
 @supports (-webkit-touch-callout: none) {
     body {
-        /* iOS Safari específico */
+        /* iOS Safari específico - comportamiento más suave */
         height: -webkit-fill-available;
-        overflow: hidden;
-        position: fixed;
-        width: 100%;
+        -webkit-overflow-scrolling: touch;
+        /* Remover position fixed que causaba problemas */
     }
     
     .player-container {
-        height: -webkit-fill-available;
         max-height: -webkit-fill-available;
     }
 }

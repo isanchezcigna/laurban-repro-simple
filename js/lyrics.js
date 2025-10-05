@@ -3,11 +3,22 @@
  * Muestra letras sobre el cover con timestamps
  */
 
-// Configuración de sincronización
+// Detectar dispositivo iOS
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// Configuración de sincronización con delay adaptativo por dispositivo
 const LYRICS_CONFIG = {
-    STREAM_DELAY: 1.5, // Segundos de delay para compensar latencia del stream
+    // iPhone/iPad necesitan más delay por buffer más agresivo de Safari
+    STREAM_DELAY: isIOS ? 4.5 : 1.5,
     UPDATE_INTERVAL: 100 // Intervalo de actualización en milisegundos
 };
+
+// Log solo en desarrollo local
+if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.')) {
+    console.log(`🎵 LYRICS CONFIG: Delay adaptativo activado`);
+    console.log(`📱 Dispositivo: ${isIOS ? 'iOS (iPhone/iPad)' : 'Desktop/Android'}`);
+    console.log(`⏱️ Stream delay: ${LYRICS_CONFIG.STREAM_DELAY}s`);
+}
 
 class LyricsManager {
     constructor() {

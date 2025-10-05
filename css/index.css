@@ -170,6 +170,14 @@ body.theme-day.audio-playing .wave-background {
                 max-width 0.5s ease;
     will-change: transform, filter;
     transform-origin: center center;
+    /* Protección contra interacciones */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
 }
 .logo.active {
     /* La animación base ahora es controlada por el visualizador de audio */
@@ -206,12 +214,19 @@ body.theme-day.audio-playing .wave-background {
         sepia(0.05);
     opacity: 0; /* Por defecto invisible */
     pointer-events: none;
+    /* Protección contra interacciones */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
 }
 
 /* La imagen activa es la que se muestra */
 .cover.active {
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: none; /* Mantener sin interacción incluso cuando está activo */
 }
 
 /* Efecto vintage con overlay de textura */
@@ -298,6 +313,12 @@ body.theme-day.audio-playing .wave-background {
     display: flex !important; /* Forzar flexbox para centrado */
     align-items: center !important;
     justify-content: center !important;
+    /* Protección contra interacciones */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 /* Indicador de volumen sobre el cover */

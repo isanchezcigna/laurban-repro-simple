@@ -6,13 +6,15 @@ El sistema de letras ahora se sincroniza automáticamente con el tiempo real de 
 
 ## 🔄 Cómo Funciona
 
-### 1. **Tiempo Virtual con Compensación de Latencia**
+### 1. **Tiempo Virtual con Compensación de Latencia Adaptativa**
 
 En lugar de usar el tiempo del stream de audio (que es continuo), el sistema usa:
 - **`elapsed`**: Tiempo transcurrido de la canción según Azura
 - **`duration`**: Duración total de la canción
 - **Timestamp de inicio**: Se calcula cuando se detecta el cambio de canción
-- **🆕 Delay de 1 segundo**: Compensación nativa para latencia del stream
+- **🆕 Delay adaptativo**: 
+  - **Desktop/Android**: 1.5 segundos
+  - **iPhone/iPad**: 4.5 segundos (Safari tiene buffer más agresivo)
 
 ### 2. **Cálculo de Sincronización**
 

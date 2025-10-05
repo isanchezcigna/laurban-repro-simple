@@ -239,20 +239,20 @@
         // Esto evita que el audio se silencie por problemas de CORS
         
         // ✅ CORS YA ESTÁ CONFIGURADO CORRECTAMENTE - Visualizador habilitado en móviles
-        // if (isMobileDevice()) {
-        //     console.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para evitar problemas de CORS');
-        //     console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
-        //     console.log('💡 Usa animación CSS simple en su lugar');
-        //     
-        //     state.isVisualizerActive = true; // Para que las funciones de visualización sepan que está "activo"
-        //     
-        //     // Aplicar animación CSS simple
-        //     if (elements.logo) {
-        //         elements.logo.classList.add('active');
-        //         elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
-        //     }
-        //     return;
-        // }
+        if (isMobileDevice()) {
+            console.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para evitar problemas de CORS');
+            console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
+            console.log('💡 Usa animación CSS simple en su lugar');
+            
+            state.isVisualizerActive = true; // Para que las funciones de visualización sepan que está "activo"
+            
+            // Aplicar animación CSS simple
+            if (elements.logo) {
+                elements.logo.classList.add('active');
+                elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
+            }
+            return;
+        }
 
         // if (isLocalDevelopment()) {
         //     console.warn('🔧 Desarrollo local detectado - Visualizador deshabilitado (sin CORS)');

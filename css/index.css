@@ -197,11 +197,21 @@ body.theme-day.audio-playing .wave-background {
         0 8px 25px rgba(0, 0, 0, 0.4),
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 0 30px rgba(0, 0, 0, 0.15);
-    position: relative;
+    position: absolute; /* Cambio para superponer las dos imágenes */
+    top: 0;
+    left: 0;
     filter: 
         contrast(1.05) 
         saturate(0.95) 
         sepia(0.05);
+    opacity: 0; /* Por defecto invisible */
+    pointer-events: none;
+}
+
+/* La imagen activa es la que se muestra */
+.cover.active {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* Efecto vintage con overlay de textura */
@@ -238,13 +248,16 @@ body.theme-day.audio-playing .wave-background {
     z-index: 1;
 }
 
-/* Animaciones para cambio de cover - MEJORADAS */
+/* Animaciones para cambio de cover - TRANSICIÓN CONTINUA CON SWAP */
 .cover.cover-exit {
     animation: coverExitAnimation 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    z-index: 2; /* La que sale debe estar encima */
 }
 
 .cover.cover-enter {
-    animation: coverEnterAnimation 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: coverEnterAnimation 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    z-index: 1; /* La que entra está debajo */
+    opacity: 1 !important; /* Forzar que sea visible durante la animación */
 }
 
 @keyframes coverExitAnimation {
@@ -253,22 +266,23 @@ body.theme-day.audio-playing .wave-background {
         transform: scale(1) rotateY(0deg);
         filter: blur(0px) brightness(1);
     }
+    99% {
+        opacity: 1;
+        transform: scale(0.85) rotateY(90deg);
+        filter: blur(3px) brightness(0.7);
+    }
     100% {
         opacity: 0;
-        transform: scale(0.75) rotateY(90deg);
-        filter: blur(4px) brightness(0.5);
+        transform: scale(0.85) rotateY(90deg);
+        filter: blur(3px) brightness(0.7);
     }
 }
 
 @keyframes coverEnterAnimation {
     0% {
-        opacity: 0;
-        transform: scale(0.75) rotateY(-90deg);
-        filter: blur(4px) brightness(0.5);
-    }
-    60% {
         opacity: 1;
-        filter: blur(0px) brightness(1.1);
+        transform: scale(0.85) rotateY(-90deg);
+        filter: blur(3px) brightness(0.7);
     }
     100% {
         opacity: 1;

@@ -1344,36 +1344,53 @@
      * @param {string} newCoverUrl - URL del nuevo cover
      */
     function updateCoverWithTransition(newCoverUrl) {
-        if (!elements.cover || state.currentCoverUrl === newCoverUrl) {
+        if (!elements.cover || !elements.coverNext || state.currentCoverUrl === newCoverUrl) {
             return;
         }
 
-        // PRECARGAR la imagen antes de iniciar la animación
+        // Determinar cuál imagen está activa actualmente
+        const currentCover = elements.cover.classList.contains('active') ? elements.cover : elements.coverNext;
+        const nextCover = currentCover === elements.cover ? elements.coverNext : elements.cover;
+
+        // PRECARGAR la nueva imagen en la imagen inactiva
         const preloadImg = new Image();
         preloadImg.onload = () => {
-            // Ahora que la imagen está cargada, iniciar animación de salida
-            elements.cover.classList.add('cover-exit');
+            // Cargar la nueva imagen en el elemento inactivo (YA ESTÁ LISTA)
+            nextCover.src = newCoverUrl;
             
-            setTimeout(() => {
-                // Cambiar la imagen (ya está precargada)
-                elements.cover.src = newCoverUrl;
-                state.currentCoverUrl = newCoverUrl;
-                elements.audio.setAttribute('poster', newCoverUrl);
-                
-                // Quitar clase de salida y agregar clase de entrada
-                elements.cover.classList.remove('cover-exit');
-                elements.cover.classList.add('cover-enter');
-                
-                setTimeout(() => {
-                    elements.cover.classList.remove('cover-enter');
-                }, 650);
-            }, 350);
+            // LIMPIAR TODAS LAS CLASES DE ANIMACIÓN ANTES DE EMPEZAR
+            elements.cover.classList.remove('cover-exit', 'cover-enter');
+            elements.coverNext.classList.remove('cover-exit', 'cover-enter');
+            
+            // Asegurar que el navegador tiene la imagen renderizada
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    // INICIAR AMBAS ANIMACIONES AL MISMO TIEMPO
+                    // La actual sale girando a la derecha
+                    currentCover.classList.add('cover-exit');
+                    
+                    // La nueva entra girando desde la izquierda
+                    nextCover.classList.add('active', 'cover-enter');
+                    
+                    // Limpiar después de las animaciones (ambas duran 350ms)
+                    setTimeout(() => {
+                        currentCover.classList.remove('active', 'cover-exit');
+                        nextCover.classList.remove('cover-enter');
+                    }, 360); // Un poquito más para asegurar
+                    
+                    // Actualizar estado
+                    state.currentCoverUrl = newCoverUrl;
+                    elements.audio.setAttribute('poster', newCoverUrl);
+                });
+            });
         };
         
         preloadImg.onerror = () => {
             // Si falla la precarga, usar fallback sin animación
             console.warn('Error al precargar cover:', newCoverUrl);
-            elements.cover.src = newCoverUrl;
+            nextCover.src = newCoverUrl;
+            currentCover.classList.remove('active');
+            nextCover.classList.add('active');
             state.currentCoverUrl = newCoverUrl;
         };
         
@@ -1567,6 +1584,7 @@
         elements.close2Button = document.getElementById('close2Button');
         elements.song = document.getElementById('song');
         elements.cover = document.getElementById('cover');
+        elements.coverNext = document.getElementById('coverNext');
         elements.playText = document.getElementById('playText');
         elements.playEmoji = document.getElementById('playEmoji');
     }

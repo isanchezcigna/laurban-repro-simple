@@ -135,7 +135,12 @@
         currentSloganIndex: 0, // Índice del slogan actual
         sloganInterval: null, // Intervalo para cambiar slogans
         currentPlayMessageIndex: 0, // Índice del mensaje de play actual
-        playMessageInterval: null // Intervalo para cambiar mensajes de play
+        playMessageInterval: null, // Intervalo para cambiar mensajes de play
+        lyricsManager: null, // Gestor de letras sincronizadas
+        songStartTime: null, // Timestamp cuando empezó la canción actual
+        songElapsed: 0, // Tiempo transcurrido de la canción según Azura (segundos)
+        songDuration: 0, // Duración total de la canción (segundos)
+        hasStartedPlaying: false // Flag para saber si el usuario ya presionó play
     };
 
     // Frases históricas de La Urban
@@ -1155,6 +1160,7 @@
             
             state.userPaused = false;
             state.retryCount = 0;
+            state.hasStartedPlaying = true; // Marcar que el usuario ya presionó play
             
             const totalTime = Date.now() - startTime;
             console.log(`✅ Audio reproduciendo ${isMobile ? '(MÓVIL)' : '(ESCRITORIO)'} - ${totalTime}ms`);
@@ -1418,14 +1424,15 @@
         const { mainArtist, formattedTitle } = parseArtistInfo(artist, songTitle);
         const songText = `Escuchas: ${mainArtist} - ${formattedTitle}`;
 
-        // Detectar cambio de canción por ID
+        // Detectar cambio de canción por ID (solo para log, no actualizar lastSongId aquí)
         const songChanged = state.lastSongId !== null && state.lastSongId !== songId;
         
         if (songChanged) {
             console.log(`🎵 Nueva canción: ${mainArtist} - ${formattedTitle}`);
         }
         
-        state.lastSongId = songId;
+        // NO actualizar lastSongId aquí, se hace en la sección de letras para tener control total
+        // state.lastSongId = songId;  // <-- REMOVIDO
 
         if (!state.showingKickVideo && elements.cover) {
             const coverUrl = art || CONFIG.DEFAULT_COVER;
@@ -1484,6 +1491,100 @@
     /**
      * Actualiza toda la información de la canción y estado de la emisora
      */
+    /**
+     * Busca y carga letras sincronizadas desde LRCLIB
+     * @param {string} artist - Nombre del artista
+     * @param {string} title - Título de la canción
+     * @param {number} duration - Duración de la canción en segundos (opcional)
+     * @param {number} elapsed - Tiempo transcurrido de la canción en segundos (opcional)
+     * @param {boolean} silent - Si es true, no muestra logs de error (solo para búsqueda automática)
+     */
+    async function fetchAndLoadLyrics(artist, title, duration = null, elapsed = 0, silent = false) {
+        if (!state.lyricsManager) {
+            return;
+        }
+
+        try {
+            // Construir URL de LRCLIB
+            let url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
+            if (duration) {
+                url += `&duration=${Math.floor(duration)}`;
+            }
+
+            // Log solo si no es silencioso
+            if (!silent) {
+                logger.info(`🔍 Buscando letras para: ${artist} - ${title}`);
+                if (elapsed > 0) {
+                    logger.info(`⏱️ Tiempo transcurrido: ${elapsed.toFixed(2)}s de ${duration}s`);
+                }
+            }
+
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                // Limpiar letras silenciosamente si no hay disponibles
+                state.lyricsManager.clear();
+                
+                // Log solo si no es silencioso
+                if (!silent) {
+                    logger.info('ℹ️ No hay letras disponibles para esta canción');
+                }
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.syncedLyrics) {
+                // Parsear letras LRC primero
+                const lines = data.syncedLyrics.split('\n');
+                const lyrics = [];
+                const timeRegex = /\[(\d{2}):(\d{2})\.?(\d{2,3})?\]/;
+                
+                lines.forEach(line => {
+                    const match = timeRegex.exec(line);
+                    if (match) {
+                        const minutes = parseInt(match[1]);
+                        const seconds = parseInt(match[2]);
+                        const centiseconds = match[3] ? parseInt(match[3]) : 0;
+                        
+                        const time = minutes * 60 + seconds + (centiseconds / (match[3]?.length === 3 ? 1000 : 100));
+                        const text = line.replace(timeRegex, '').trim();
+                        
+                        if (text) {
+                            lyrics.push({ time, text });
+                        }
+                    }
+                });
+                
+                // Cargar letras con el offset de tiempo transcurrido
+                state.lyricsManager.loadLyrics(lyrics, elapsed);
+                
+                // Log solo si no es silencioso
+                if (!silent) {
+                    logger.success(`✅ Letras cargadas: ${lyrics.length} líneas (inicio en ${elapsed.toFixed(2)}s)`);
+                    console.log('%c🎤 LETRAS SINCRONIZADAS', 'background: #fc5e16; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;');
+                    console.log(`Sincronizadas desde el segundo ${elapsed.toFixed(2)} de la canción`);
+                }
+            } else {
+                // Limpiar letras si solo hay letras sin sincronización
+                state.lyricsManager.clear();
+                
+                // Log solo si no es silencioso
+                if (!silent && data.plainLyrics) {
+                    logger.info('ℹ️ Solo hay letras sin sincronización disponibles');
+                }
+            }
+        } catch (error) {
+            // Limpiar letras en caso de error
+            state.lyricsManager.clear();
+            
+            // Log de error solo si no es silencioso
+            if (!silent) {
+                logger.error('Error al buscar letras:', error);
+            }
+        }
+    }
+
     async function updateSongInfo() {
         try {
             const [radioData, kickLive] = await Promise.all([
@@ -1502,6 +1603,48 @@
                 updateLiveInfo(radioData);
             } else {
                 updateSongInfoUI(radioData);
+            }
+            
+            // 🎵 BÚSQUEDA DE LETRAS - Funciona tanto en modo live como en modo canción
+            const currentSongId = radioData.now_playing?.song?.id;
+            const isFirstLoad = state.lastSongId === null && state.hasStartedPlaying;
+            const songChanged = currentSongId && currentSongId !== state.lastSongId && state.hasStartedPlaying;
+            
+            // Log solo en desarrollo para debugging
+            logger.dev('🔍 DEBUG LETRAS:', {
+                currentSongId,
+                lastSongId: state.lastSongId,
+                isFirstLoad,
+                songChanged,
+                hasStartedPlaying: state.hasStartedPlaying,
+                hasLyricsManager: !!state.lyricsManager,
+                isLive,
+                artist: radioData.now_playing?.song?.artist,
+                title: radioData.now_playing?.song?.title
+            });
+            
+            if (currentSongId && (isFirstLoad || songChanged)) {
+                state.lastSongId = currentSongId;
+                
+                // Limpiar letras anteriores inmediatamente (excepto en primera carga)
+                if (state.lyricsManager && !isFirstLoad) {
+                    state.lyricsManager.clear();
+                }
+                
+                const artist = radioData.now_playing?.song?.artist || '';
+                const title = radioData.now_playing?.song?.title || '';
+                const duration = radioData.now_playing?.duration || null;
+                const elapsed = radioData.now_playing?.elapsed || 0;
+                
+                // Guardar datos de tiempo en el estado
+                state.songElapsed = elapsed;
+                state.songDuration = duration;
+                state.songStartTime = Date.now() - (elapsed * 1000);
+                
+                if (artist && title) {
+                    // Buscar letras en segundo plano con el tiempo transcurrido (modo silencioso)
+                    fetchAndLoadLyrics(artist, title, duration, elapsed, true);
+                }
             }
 
             // Manejo del video de Kick
@@ -1890,6 +2033,17 @@
         setThemeByTime();
         enableChatCanvas();
         
+        // Inicializar gestor de letras sincronizadas
+        if (typeof LyricsManager !== 'undefined') {
+            state.lyricsManager = new LyricsManager();
+            state.lyricsManager.init(elements.audio);
+            logger.success('✨ LyricsManager inicializado');
+            
+            // Agregar letras de prueba - DEMO
+            // Descomentar la siguiente línea para probar con letras de demo
+            // loadDemoLyrics();
+        }
+        
         // 🚀 PRELOAD DEL STREAM - Temporalmente deshabilitado para debug
         // preloadAudioStream();
         
@@ -1953,6 +2107,118 @@
 
     // Iniciar cuando el DOM esté listo
     document.addEventListener('DOMContentLoaded', init);
+
+    // ========== FUNCIONES GLOBALES PARA TESTING DE LETRAS ==========
+    
+    /**
+     * Carga letras de demostración - Llamar desde consola para probar
+     */
+    window.loadDemoLyrics = function() {
+        if (state.lyricsManager) {
+            const demoLyrics = LyricsManager.getDemoLyrics();
+            state.lyricsManager.loadLyrics(demoLyrics);
+            logger.success('🎤 Letras de demostración cargadas');
+            console.log('%c🎵 DEMO LYRICS LOADED', 'background: #fc5e16; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;');
+            console.log('Las letras aparecerán sobre el cover mientras el audio se reproduce');
+        } else {
+            logger.error('LyricsManager no está inicializado');
+        }
+    };
+
+    /**
+     * Limpia las letras actuales
+     */
+    window.clearLyrics = function() {
+        if (state.lyricsManager) {
+            state.lyricsManager.clear();
+            logger.success('🧹 Letras limpiadas');
+        }
+    };
+
+    /**
+     * Carga letras personalizadas desde formato LRC
+     * @param {string} lrcText - Texto en formato LRC
+     */
+    window.loadLyricsFromLRC = function(lrcText) {
+        if (state.lyricsManager) {
+            state.lyricsManager.loadFromLRC(lrcText);
+            logger.success('🎤 Letras LRC cargadas');
+        }
+    };
+
+    /**
+     * Busca letras de la canción actual que está sonando
+     */
+    window.searchCurrentSongLyrics = async function() {
+        try {
+            const radioData = await getRadioData();
+            if (!radioData) {
+                console.error('❌ No se pudo obtener información de la canción actual');
+                return;
+            }
+
+            const artist = radioData.now_playing?.song?.artist || '';
+            const title = radioData.now_playing?.song?.title || '';
+            const duration = radioData.now_playing?.duration || null;
+            const elapsed = radioData.now_playing?.elapsed || 0;
+
+            if (!artist || !title) {
+                console.error('❌ No hay información de artista/título disponible');
+                return;
+            }
+
+            console.log(`🔍 Buscando letras para: ${artist} - ${title}`);
+            console.log(`⏱️ Tiempo: ${elapsed.toFixed(2)}s / ${duration}s`);
+            
+            await fetchAndLoadLyrics(artist, title, duration, elapsed);
+        } catch (error) {
+            console.error('Error al buscar letras:', error);
+        }
+    };
+
+    /**
+     * Ajusta el delay de sincronización del stream (en segundos)
+     * Útil para afinar la sincronización si las letras aparecen muy pronto o muy tarde
+     * @param {number} seconds - Segundos de delay (por defecto 1.0)
+     */
+    window.setLyricsDelay = function(seconds) {
+        if (typeof LYRICS_CONFIG !== 'undefined') {
+            const oldDelay = LYRICS_CONFIG.STREAM_DELAY;
+            LYRICS_CONFIG.STREAM_DELAY = seconds;
+            console.log(`⚙️ Delay de letras ajustado: ${oldDelay}s → ${seconds}s`);
+            console.log('💡 Recarga las letras con searchCurrentSongLyrics() para aplicar el cambio');
+        } else {
+            console.error('❌ LYRICS_CONFIG no está disponible');
+        }
+    };
+
+    /**
+     * Obtiene el delay actual de sincronización
+     */
+    window.getLyricsDelay = function() {
+        if (typeof LYRICS_CONFIG !== 'undefined') {
+            console.log(`⏱️ Delay actual: ${LYRICS_CONFIG.STREAM_DELAY} segundos`);
+            return LYRICS_CONFIG.STREAM_DELAY;
+        } else {
+            console.error('❌ LYRICS_CONFIG no está disponible');
+            return null;
+        }
+    };
+
+    /**
+     * Ejemplo de uso desde consola:
+     * loadDemoLyrics() - Carga letras de prueba
+     * clearLyrics() - Limpia las letras
+     * searchCurrentSongLyrics() - Busca letras de la canción actual
+     * setLyricsDelay(1.5) - Ajusta delay a 1.5 segundos
+     * getLyricsDelay() - Ver delay actual
+     * 
+     * O con LRC personalizado:
+     * loadLyricsFromLRC(`
+     * [00:12.00]Primera línea
+     * [00:17.20]Segunda línea
+     * `)
+     */
 
 })();
 

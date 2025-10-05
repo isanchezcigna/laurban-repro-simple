@@ -133,6 +133,11 @@
                 <img id="coverNext" src="https://laurban.cl/img/default.jpg" alt="Carátula del Álbum" class="cover">
                 <!-- Indicador de volumen sobre el cover -->
                 <div id="volumeIndicator" class="volume-indicator">100%</div>
+                <!-- Letras sincronizadas -->
+                <div id="lyricsOverlay" class="lyrics-overlay" style="display: none;">
+                    <div id="lyricsPrevious" class="lyrics-line previous"></div>
+                    <div id="lyricsCurrent" class="lyrics-line active"></div>
+                </div>
             </div>
             <div class="song-info">
                 <div class="marquee">
@@ -243,6 +248,7 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="js/lyrics.js"></script>
     <script src="js/index.js"></script>
 </body>
 </html>

@@ -324,6 +324,87 @@ body.theme-day.audio-playing .wave-background {
     opacity: 1;
 }
 
+/* ========== LETRAS SINCRONIZADAS SOBRE EL COVER ========== */
+.lyrics-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 15px;
+    background: linear-gradient(to top, 
+        rgba(0, 0, 0, 0.9) 0%, 
+        rgba(0, 0, 0, 0.7) 50%,
+        transparent 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    pointer-events: none;
+    z-index: 5;
+    min-height: 100px;
+    border-radius: 0 0 15px 15px;
+}
+
+.lyrics-line {
+    font-family: 'Lato', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    text-align: center;
+    text-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.9),
+        0 0 20px var(--accent-glow);
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 4px 0;
+    line-height: 1.4;
+    max-width: 90%;
+}
+
+.lyrics-line.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    animation: lyricPulse 0.6s ease-out;
+}
+
+.lyrics-line.previous {
+    opacity: 0.4;
+    transform: translateY(-10px) scale(0.85);
+    font-size: 0.9rem;
+}
+
+@keyframes lyricPulse {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(0) scale(1.08);
+        text-shadow: 
+            0 2px 8px rgba(0, 0, 0, 0.9),
+            0 0 30px var(--accent-glow-strong);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive para letras */
+@media (max-width: 400px) {
+    .lyrics-overlay {
+        padding: 15px 10px;
+        min-height: 80px;
+    }
+    
+    .lyrics-line {
+        font-size: 0.95rem;
+    }
+    
+    .lyrics-line.previous {
+        font-size: 0.8rem;
+    }
+}
+
 /* ========== PANTALLA DE CARGA INICIAL ========== */
 .loading-screen {
     position: fixed;

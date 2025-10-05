@@ -238,7 +238,7 @@
         // En móviles o desarrollo local, NO inicializar el visualizador
         // Esto evita que el audio se silencie por problemas de CORS
         
-        // ✅ CORS YA ESTÁ CONFIGURADO CORRECTAMENTE - Visualizador habilitado en móviles
+        // ✅ OPTIMIZADO PARA MÓVILES - Puerto 8010 con CORS + tiempos reducidos
         // Sin embargo, móviles tienen limitaciones con Web Audio API, mejor desactivar
         if (isMobileDevice()) {
             console.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para mejor compatibilidad');
@@ -1083,22 +1083,26 @@
             clearInterval(state.volumeFadeInterval);
         }
         
-        const startVolume = 0;
+        // Obtener volumen inicial actual (puede no ser 0 en móviles)
+        const startVolume = elements.audio.volume;
         const startTime = Date.now();
         const volumeStep = 0.01; // Incremento suave
-        const stepDuration = (duration / (targetVolume / volumeStep)); // Calcular intervalo
+        const isMobile = isMobileDevice();
         
-        console.log(`🔊 Fade-in: 0 → ${targetVolume} en ${duration}ms`);
+        // En móviles: actualización menos frecuente para mejor rendimiento
+        const updateInterval = isMobile ? 80 : 50; // 80ms vs 50ms
+        
+        console.log(`🔊 Fade-in: ${startVolume} → ${targetVolume} en ${duration}ms ${isMobile ? '(móvil optimizado)' : ''}`);
         
         state.volumeFadeInterval = setInterval(() => {
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1); // 0 a 1
-            const currentVolume = startVolume + (targetVolume * progress);
+            const currentVolume = startVolume + ((targetVolume - startVolume) * progress);
             
             elements.audio.volume = currentVolume;
             
-            // Actualizar slider visual
-            if (elements.volumeSlider) {
+            // Actualizar slider visual (menos frecuente en móviles)
+            if (elements.volumeSlider && (!isMobile || progress % 0.2 < 0.1)) {
                 elements.volumeSlider.value = Math.round(currentVolume * 100);
                 updateVolumeSlider();
             }
@@ -1110,15 +1114,18 @@
                 elements.audio.volume = targetVolume;
                 console.log('✅ Fade-in completado');
             }
-        }, 50); // Actualización cada 50ms para suavidad
+        }, updateInterval); // Intervalo optimizado por dispositivo
     }
 
     /**
      * Reproduce el audio de la emisora
      */
     async function playAudio() {
+        const startTime = Date.now(); // Medir tiempo total
+        const isMobile = isMobileDevice();
+        
         try {
-            logger.dev('🎵 playAudio() llamado');
+            logger.dev(`🎵 playAudio() llamado ${isMobile ? '(MÓVIL)' : '(ESCRITORIO)'}`);
             
             // Establecer la fuente solo si no está configurada o es inválida
             if (!elements.audio.src || elements.audio.src === window.location.href || elements.audio.src === '') {
@@ -1126,19 +1133,31 @@
                 elements.audio.src = CONFIG.STREAM_URL;
             }
             
-            // En móviles, es importante cargar explícitamente
+            // En móviles, es importante cargar explícitamente pero con optimización
             if (elements.audio.readyState < 2) { // HAVE_CURRENT_DATA
                 logger.dev('🎵 Cargando audio...');
                 elements.audio.load();
-                // Esperar un poco más en móviles para que cargue
-                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Espera optimizada: móviles necesitan menos tiempo con puerto 8010 (CORS configurado)
+                const isMobile = isMobileDevice();
+                const waitTime = isMobile ? 150 : 300; // Móviles más rápido con CORS
+                await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             
             // Fade-in suave en primera reproducción para evitar sustos
             const targetVolume = elements.volumeSlider ? elements.volumeSlider.value / 100 : 1.0;
+            const isMobile = isMobileDevice();
+            
             if (state.isFirstPlay) {
-                logger.info('🎵 Primera reproducción - fade-in suave desde 0 a', targetVolume);
-                elements.audio.volume = 0; // Iniciar en silencio
+                if (isMobile) {
+                    // En móviles: fade-in MÁS RÁPIDO para respuesta inmediata
+                    logger.info('📱 Primera reproducción móvil - fade-in rápido desde 0 a', targetVolume);
+                    elements.audio.volume = 0.3; // Iniciar con volumen parcial, no silencio total
+                } else {
+                    // En escritorio: fade-in suave tradicional
+                    logger.info('🖥️ Primera reproducción escritorio - fade-in suave desde 0 a', targetVolume);
+                    elements.audio.volume = 0; // Iniciar en silencio
+                }
                 state.isFirstPlay = false;
             }
             
@@ -1149,31 +1168,37 @@
                 src: elements.audio.src
             });
             
-            // Crear una promesa con timeout para evitar que se quede colgado
+            // Crear una promesa con timeout optimizado por dispositivo
             const playPromise = elements.audio.play();
+            const timeoutDuration = isMobile ? 6000 : 10000; // Móviles: timeout más corto
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout: El audio tardó demasiado en cargar')), 10000)
+                setTimeout(() => reject(new Error('Timeout: El audio tardó demasiado en cargar')), timeoutDuration)
             );
             
             await Promise.race([playPromise, timeoutPromise]);
             
             state.userPaused = false;
             state.retryCount = 0; // Resetear contador de reintentos
-            console.log('✅ Audio reproduciendo correctamente');
             
-            // Aplicar fade-in de volumen si estaba en 0
-            if (elements.audio.volume === 0) {
-                fadeInVolume(targetVolume, 2500); // 2.5 segundos de fade
+            const totalTime = Date.now() - startTime;
+            console.log(`✅ Audio reproduciendo correctamente ${isMobile ? '(MÓVIL)' : '(ESCRITORIO)'} - Tiempo total: ${totalTime}ms`);
+            
+            // Aplicar fade-in de volumen si estaba en volumen bajo
+            if (elements.audio.volume < targetVolume) {
+                const fadeDuration = isMobile ? 1200 : 2500; // Móviles: fade más rápido
+                fadeInVolume(targetVolume, fadeDuration);
             }
             
             // Inicializar visualizador de audio después de que el audio empiece
+            // En móviles: timeout más corto para no bloquear
+            const visualizerDelay = isMobile ? 50 : 100;
             setTimeout(() => {
                 if (!state.audioContext && !elements.audio.paused) {
                     initializeAudioVisualizer();
                 } else if (state.audioContext && state.audioContext.state === 'suspended') {
                     state.audioContext.resume();
                 }
-            }, 100);
+            }, visualizerDelay);
             
         } catch (error) {
             console.error('❌ Error al reproducir el audio:', error.name, '-', error.message);

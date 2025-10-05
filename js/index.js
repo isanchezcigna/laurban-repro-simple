@@ -1121,104 +1121,71 @@
      * Reproduce el audio de la emisora
      */
     async function playAudio() {
-        const startTime = Date.now(); // Medir tiempo total
+        const startTime = Date.now();
         const isMobile = isMobileDevice();
         
         try {
             logger.dev(`🎵 playAudio() llamado ${isMobile ? '(MÓVIL)' : '(ESCRITORIO)'}`);
             
-            // Establecer la fuente solo si no está configurada o es inválida
+            // Establecer la fuente solo si no está configurada
             if (!elements.audio.src || elements.audio.src === window.location.href || elements.audio.src === '') {
                 logger.dev('🎵 Configurando stream URL:', CONFIG.STREAM_URL);
                 elements.audio.src = CONFIG.STREAM_URL;
             }
             
-            // En móviles, es importante cargar explícitamente pero con optimización
-            if (elements.audio.readyState < 2) { // HAVE_CURRENT_DATA
+            // Cargar solo si es necesario
+            if (elements.audio.readyState < 2) {
                 logger.dev('🎵 Cargando audio...');
                 elements.audio.load();
                 
-                // Espera optimizada: móviles necesitan menos tiempo con puerto 8010 (CORS configurado)
-                const isMobile = isMobileDevice();
-                const waitTime = isMobile ? 150 : 300; // Móviles más rápido con CORS
+                // Espera mínima optimizada
+                const waitTime = isMobile ? 100 : 200;
                 await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             
-            // Fade-in suave en primera reproducción para evitar sustos
-            const targetVolume = elements.volumeSlider ? elements.volumeSlider.value / 100 : 1.0;
-            const isMobile = isMobileDevice();
-            
-            if (state.isFirstPlay) {
-                if (isMobile) {
-                    // En móviles: fade-in MÁS RÁPIDO para respuesta inmediata
-                    logger.info('📱 Primera reproducción móvil - fade-in rápido desde 0 a', targetVolume);
-                    elements.audio.volume = 0.3; // Iniciar con volumen parcial, no silencio total
-                } else {
-                    // En escritorio: fade-in suave tradicional
-                    logger.info('🖥️ Primera reproducción escritorio - fade-in suave desde 0 a', targetVolume);
-                    elements.audio.volume = 0; // Iniciar en silencio
-                }
-                state.isFirstPlay = false;
-            }
-            
             logger.info('▶️ Iniciando reproducción...');
-            logger.dev('📊 Estado del audio:', {
-                readyState: elements.audio.readyState,
-                networkState: elements.audio.networkState,
-                src: elements.audio.src
-            });
             
-            // Crear una promesa con timeout optimizado por dispositivo
+            // Timeout más generoso temporalmente
             const playPromise = elements.audio.play();
-            const timeoutDuration = isMobile ? 6000 : 10000; // Móviles: timeout más corto
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout: El audio tardó demasiado en cargar')), timeoutDuration)
+                setTimeout(() => reject(new Error('Timeout de reproducción')), 15000)
             );
             
             await Promise.race([playPromise, timeoutPromise]);
             
             state.userPaused = false;
-            state.retryCount = 0; // Resetear contador de reintentos
+            state.retryCount = 0;
             
             const totalTime = Date.now() - startTime;
-            console.log(`✅ Audio reproduciendo correctamente ${isMobile ? '(MÓVIL)' : '(ESCRITORIO)'} - Tiempo total: ${totalTime}ms`);
+            console.log(`✅ Audio reproduciendo ${isMobile ? '(MÓVIL)' : '(ESCRITORIO)'} - ${totalTime}ms`);
             
-            // Aplicar fade-in de volumen si estaba en volumen bajo
-            if (elements.audio.volume < targetVolume) {
-                const fadeDuration = isMobile ? 1200 : 2500; // Móviles: fade más rápido
-                fadeInVolume(targetVolume, fadeDuration);
+            // Fade-in simplificado solo para primera vez
+            if (state.isFirstPlay) {
+                state.isFirstPlay = false;
+                const targetVolume = elements.volumeSlider ? elements.volumeSlider.value / 100 : 1.0;
+                if (isMobile) {
+                    elements.audio.volume = targetVolume * 0.8; // Móviles: volumen directo
+                } else {
+                    elements.audio.volume = 0;
+                    fadeInVolume(targetVolume, 1500); // Escritorio: fade corto
+                }
             }
             
-            // Inicializar visualizador de audio después de que el audio empiece
-            // En móviles: timeout más corto para no bloquear
-            const visualizerDelay = isMobile ? 50 : 100;
+            // Visualizador con delay mínimo
             setTimeout(() => {
                 if (!state.audioContext && !elements.audio.paused) {
                     initializeAudioVisualizer();
-                } else if (state.audioContext && state.audioContext.state === 'suspended') {
-                    state.audioContext.resume();
                 }
-            }, visualizerDelay);
+            }, 50);
             
         } catch (error) {
-            console.error('❌ Error al reproducir el audio:', error.name, '-', error.message);
+            console.error('❌ Error al reproducir:', error.message);
             
-            // Si es un error de CORS o red
-            if (error.name === 'NotSupportedError' || error.message.includes('CORS') || error.message.includes('sources')) {
-                console.warn('⚠️ Problema con el stream. Verifica:');
-                console.warn('1. Que el servidor de streaming esté activo');
-                console.warn('2. Que los headers CORS estén configurados');
-                console.warn('3. La URL del stream sea correcta:', CONFIG.STREAM_URL);
-            }
-            
-            // Reintentar solo si no es por pausa del usuario y no excede reintentos
+            // Reintentar con delay
             if (!state.userPaused && state.retryCount < state.maxRetries) {
                 state.retryCount++;
-                console.log(`🔄 Reintento ${state.retryCount}/${state.maxRetries} en 2 segundos...`);
-                setTimeout(playAudio, CONFIG.RETRY_DELAY);
-            } else if (state.retryCount >= state.maxRetries) {
-                console.error('❌ Máximo de reintentos alcanzado. Por favor, verifica el servidor de streaming.');
-                state.retryCount = 0;
+                console.log(`🔄 Reintento ${state.retryCount}/${state.maxRetries}...`);
+                setTimeout(playAudio, 1500);
             }
         }
     }
@@ -1905,8 +1872,8 @@
         setThemeByTime();
         enableChatCanvas();
         
-        // 🚀 PRELOAD DEL STREAM - Iniciar buffering inmediatamente
-        preloadAudioStream();
+        // 🚀 PRELOAD DEL STREAM - Temporalmente deshabilitado para debug
+        // preloadAudioStream();
         
         // Primera actualización inmediata sin delay
         updateSongInfo();

@@ -98,7 +98,7 @@
 
     // Constantes de configuración
     const CONFIG = {
-        STREAM_URL: 'https://stream.laurban.cl/radio/8000/media',
+        STREAM_URL: 'https://azura.services.syntaxit.cl/radio/8000/media',
         API_URL: 'https://azura.laurban.cl/api/nowplaying/laurban',
         KICK_API_URL: 'https://kick.com/api/v2/channels/laurban/livestream',
         KICK_EMBED_URL: 'https://player.kick.com/laurban?muted=true&autoplay=true',

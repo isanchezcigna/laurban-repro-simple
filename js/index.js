@@ -192,6 +192,40 @@
     }
 
     /**
+     * Sistema de logging inteligente
+     * - Desarrollo: Todos los logs
+     * - Producción: Solo errores y logs esenciales
+     */
+    const logger = {
+        // Logs de desarrollo (solo en local)
+        dev: function(...args) {
+            if (isLocalDevelopment()) {
+                console.log(...args);
+            }
+        },
+        
+        // Logs esenciales (siempre se muestran)
+        info: function(...args) {
+            console.log(...args);
+        },
+        
+        // Warnings (siempre se muestran)
+        warn: function(...args) {
+            console.warn(...args);
+        },
+        
+        // Errores (siempre se muestran)
+        error: function(...args) {
+            console.error(...args);
+        },
+        
+        // Logs de éxito importantes (siempre se muestran)
+        success: function(...args) {
+            console.log(...args);
+        }
+    };
+
+    /**
      * Inicializa el contexto de audio y el analizador para visualización
      * NOTA: Requiere CORS en el servidor de streaming para funcionar óptimamente
      * En móviles o desarrollo local, se deshabilita automáticamente para evitar problemas de CORS
@@ -220,20 +254,20 @@
         //     return;
         // }
 
-        if (isLocalDevelopment()) {
-            console.warn('🔧 Desarrollo local detectado - Visualizador deshabilitado (sin CORS)');
-            console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
-            console.log('💡 Sube a producción (https://laurban.cl) para ver efectos completos');
+        // if (isLocalDevelopment()) {
+        //     console.warn('🔧 Desarrollo local detectado - Visualizador deshabilitado (sin CORS)');
+        //     console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
+        //     console.log('💡 Sube a producción (https://laurban.cl) para ver efectos completos');
             
-            state.isVisualizerActive = true;
+        //     state.isVisualizerActive = true;
             
-            // Aplicar animación CSS simple
-            if (elements.logo) {
-                elements.logo.classList.add('active');
-                elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
-            }
-            return;
-        }
+        //     // Aplicar animación CSS simple
+        //     if (elements.logo) {
+        //         elements.logo.classList.add('active');
+        //         elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
+        //     }
+        //     return;
+        // }
 
         try {
             // Crear contexto de audio
@@ -275,13 +309,13 @@
             startLogoVisualization();
             startBackgroundVisualization();
             
-            console.log('✅ Visualizador de audio inicializado correctamente');
-            console.log('🎵 Detección de kick/bass optimizada para música urbana');
+            logger.success('✅ Visualizador de audio inicializado correctamente');
+            logger.info('🎵 Detección de kick/bass optimizada para música urbana');
             
             // Mensaje específico para móviles indicando que CORS está funcionando
             if (isMobileDevice()) {
-                console.log('📱✅ CORS configurado correctamente - Visualizador habilitado en móvil');
-                console.log('🎨 Efectos visuales reactivos disponibles en dispositivos móviles');
+                logger.success('📱✅ CORS configurado correctamente - Visualizador habilitado en móvil');
+                logger.info('🎨 Efectos visuales reactivos disponibles en dispositivos móviles');
             }
             
         } catch (error) {
@@ -1085,17 +1119,17 @@
      */
     async function playAudio() {
         try {
-            console.log('🎵 playAudio() llamado');
+            logger.dev('🎵 playAudio() llamado');
             
             // Establecer la fuente solo si no está configurada o es inválida
             if (!elements.audio.src || elements.audio.src === window.location.href || elements.audio.src === '') {
-                console.log('🎵 Configurando stream URL:', CONFIG.STREAM_URL);
+                logger.dev('🎵 Configurando stream URL:', CONFIG.STREAM_URL);
                 elements.audio.src = CONFIG.STREAM_URL;
             }
             
             // En móviles, es importante cargar explícitamente
             if (elements.audio.readyState < 2) { // HAVE_CURRENT_DATA
-                console.log('🎵 Cargando audio...');
+                logger.dev('🎵 Cargando audio...');
                 elements.audio.load();
                 // Esperar un poco más en móviles para que cargue
                 await new Promise(resolve => setTimeout(resolve, 300));
@@ -1104,13 +1138,13 @@
             // Fade-in suave en primera reproducción para evitar sustos
             const targetVolume = elements.volumeSlider ? elements.volumeSlider.value / 100 : 1.0;
             if (state.isFirstPlay) {
-                console.log('🎵 Primera reproducción - fade-in suave desde 0 a', targetVolume);
+                logger.info('🎵 Primera reproducción - fade-in suave desde 0 a', targetVolume);
                 elements.audio.volume = 0; // Iniciar en silencio
                 state.isFirstPlay = false;
             }
             
-            console.log('▶️ Iniciando reproducción...');
-            console.log('📊 Estado del audio:', {
+            logger.info('▶️ Iniciando reproducción...');
+            logger.dev('📊 Estado del audio:', {
                 readyState: elements.audio.readyState,
                 networkState: elements.audio.networkState,
                 src: elements.audio.src
@@ -1749,12 +1783,12 @@
         
         // Audio loadstart
         elements.audio.addEventListener('loadstart', () => {
-            console.log('📥 Comenzando a cargar el stream...');
+            logger.dev('📥 Comenzando a cargar el stream...');
         });
         
         // Audio loadedmetadata
         elements.audio.addEventListener('loadedmetadata', () => {
-            console.log('📊 Metadata del stream cargada');
+            logger.dev('📊 Metadata del stream cargada');
         });
         
         // Audio loadeddata
@@ -1784,6 +1818,58 @@
     }
 
     /**
+     * Preload del stream de audio para mejor UX en conexiones móviles
+     * Configura el audio source y comienza buffering inmediatamente
+     */
+    function preloadAudioStream() {
+        if (!elements.audio) return;
+        
+        try {
+            logger.info('🚀 Iniciando preload del stream para mejor UX...');
+            
+            // Configurar el stream URL inmediatamente
+            elements.audio.src = CONFIG.STREAM_URL;
+            
+            // Cambiar preload a 'metadata' para empezar buffering sin autoplay
+            elements.audio.preload = 'metadata';
+            
+            // Llamar load() para iniciar el proceso de buffering
+            elements.audio.load();
+            
+            // Event listeners para monitorear el progreso del preload
+            elements.audio.addEventListener('loadstart', () => {
+                logger.dev('📡 Preload: Comenzando descarga del stream...');
+            }, { once: true });
+            
+            elements.audio.addEventListener('progress', (e) => {
+                if (elements.audio.buffered && elements.audio.buffered.length > 0) {
+                    const bufferedEnd = elements.audio.buffered.end(elements.audio.buffered.length - 1);
+                    const bufferedSeconds = Math.round(bufferedEnd);
+                    if (bufferedSeconds > 0) {
+                        logger.dev(`📊 Preload: ${bufferedSeconds}s de audio bufferizado`);
+                    }
+                }
+            });
+            
+            elements.audio.addEventListener('canplay', () => {
+                logger.success('✅ Preload: Stream listo para reproducir instantáneamente');
+            }, { once: true });
+            
+            elements.audio.addEventListener('error', (e) => {
+                logger.error('⚠️ Error en preload:', e.type);
+                // En caso de error, intentar de nuevo después de un delay
+                setTimeout(() => {
+                    logger.dev('🔄 Reintentando preload...');
+                    elements.audio.load();
+                }, 2000);
+            }, { once: true });
+            
+        } catch (error) {
+            logger.error('⚠️ Error configurando preload:', error.message);
+        }
+    }
+
+    /**
      * Inicializa la aplicación
      */
     function init() {
@@ -1794,6 +1880,9 @@
         setupEventListeners();
         setThemeByTime();
         enableChatCanvas();
+        
+        // 🚀 PRELOAD DEL STREAM - Iniciar buffering inmediatamente
+        preloadAudioStream();
         
         // Primera actualización inmediata sin delay
         updateSongInfo();
@@ -1810,8 +1899,8 @@
         // Ocultar pantalla de carga después de que todo esté listo
         hideLoadingScreen();
         
-        console.log('🎵 La Urban Player inicializado');
-        console.log(`⏱️ Actualización de info cada ${CONFIG.UPDATE_INTERVAL/1000} segundos`);
+        logger.success('🎵 La Urban Player inicializado');
+        logger.info(`⏱️ Actualización de info cada ${CONFIG.UPDATE_INTERVAL/1000} segundos`);
     }
 
     /**

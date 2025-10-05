@@ -239,8 +239,9 @@
         // Esto evita que el audio se silencie por problemas de CORS
         
         // ✅ CORS YA ESTÁ CONFIGURADO CORRECTAMENTE - Visualizador habilitado en móviles
+        // Sin embargo, móviles tienen limitaciones con Web Audio API, mejor desactivar
         if (isMobileDevice()) {
-            console.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para evitar problemas de CORS');
+            console.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para mejor compatibilidad');
             console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
             console.log('💡 Usa animación CSS simple en su lugar');
             
@@ -312,11 +313,9 @@
             logger.success('✅ Visualizador de audio inicializado correctamente');
             logger.info('🎵 Detección de kick/bass optimizada para música urbana');
             
-            // Mensaje específico para móviles indicando que CORS está funcionando
-            if (isMobileDevice()) {
-                logger.success('📱✅ CORS configurado correctamente - Visualizador habilitado en móvil');
-                logger.info('🎨 Efectos visuales reactivos disponibles en dispositivos móviles');
-            }
+            // Mensaje específico para escritorio - móviles usan animación CSS simple
+            logger.success('�✅ Visualizador Web Audio API activo en escritorio');
+            logger.info('🎨 Efectos visuales reactivos completos disponibles');
             
         } catch (error) {
             console.warn('⚠️ No se pudo inicializar el visualizador de audio:', error.message);

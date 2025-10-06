@@ -1295,7 +1295,8 @@
         
         const playerContainer = document.querySelector('.player-container');
         if (playerContainer) {
-            playerContainer.style.maxWidth = '400px';
+            // Remover el estilo inline para que respete el CSS
+            playerContainer.style.maxWidth = '';
         }
         
         if (elements.logo) {

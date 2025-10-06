@@ -1340,7 +1340,8 @@ audio::-webkit-media-controls-fullscreen-button {
 @media (max-height: 900px) {
     .player-container {
         padding: 15px;
-        max-width: 350px; /* Reducir el ancho máximo */
+        min-width: 350px; /* Mantener ancho mínimo */
+        max-width: 420px; /* Ancho máximo razonable */
     }
     .logo {
         margin-top: 10px; /* Añadir margen superior para evitar recorte */
@@ -1350,7 +1351,8 @@ audio::-webkit-media-controls-fullscreen-button {
 @media (max-height: 800px) {
     .player-container {
         padding: 10px;
-        max-width: 350px; /* Reducir el ancho máximo */
+        min-width: 350px; /* Mantener ancho mínimo */
+        max-width: 420px; /* Ancho máximo razonable */
     }
     .logo {
         margin-top: 15px; /* Aumentar margen superior */
@@ -1360,7 +1362,8 @@ audio::-webkit-media-controls-fullscreen-button {
 @media (max-height: 700px) {
     .player-container {
         padding: 5px;
-        max-width: 250px; /* Reducir el ancho máximo */
+        min-width: 350px; /* Mantener ancho mínimo */
+        max-width: 420px; /* Ancho máximo razonable */
     }
     .logo {
         margin-top: 20px; /* Aumentar margen superior */
@@ -1370,7 +1373,8 @@ audio::-webkit-media-controls-fullscreen-button {
 @media (max-height: 600px) {
     .player-container {
         padding: 2px;
-        max-width: 200px; /* Reducir el ancho máximo */
+        min-width: 350px; /* Mantener ancho mínimo */
+        max-width: 420px; /* Ancho máximo razonable */
     }
     .logo {
         margin-top: 25px; /* Aumentar margen superior */
@@ -1569,6 +1573,11 @@ audio::-webkit-media-controls-fullscreen-button {
     .action-buttons {
         grid-template-columns: repeat(2, 1fr);
     }
+    
+    /* Para tablets y pantallas medianas, asegurar ancho mínimo */
+    .player-container {
+        min-width: 350px;
+    }
 }
 
 /* Ajustes para botones de acción en móviles */
@@ -1698,6 +1707,15 @@ audio::-webkit-media-controls-fullscreen-button {
     
     .player-container {
         margin: 10px auto;
+        min-width: 350px !important; /* Forzar ancho mínimo en landscape */
+    }
+}
+
+/* ========== MEDIA QUERY ESPECÍFICA PARA TABLETS (iPAD) ========== */
+@media (min-width: 501px) and (max-width: 1024px) {
+    .player-container {
+        min-width: 350px !important; /* Ancho mínimo para tablets */
+        max-width: 420px;
     }
 }
 

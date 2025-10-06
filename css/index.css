@@ -1869,6 +1869,7 @@ audio::-webkit-media-controls-fullscreen-button {
         overflow-y: auto; /* Permitir scroll interno si es necesario */
         padding: 15px;
         box-sizing: border-box;
+        min-width: 350px; /* Ancho mínimo para tablets/iPads */
         /* Mantener el layout original del player */
     }
     

@@ -98,7 +98,7 @@
 
     // Constantes de configuración
     const CONFIG = {
-        STREAM_URL: 'https://stream.laurban.cl:8000/media',
+        STREAM_URL: 'https://azura.laurban.cl/listen/laurban/media',
         API_URL: 'https://azura.laurban.cl/api/nowplaying/laurban',
         KICK_API_URL: 'https://kick.com/api/v2/channels/laurban/livestream',
         KICK_EMBED_URL: 'https://player.kick.com/laurban?muted=true&autoplay=true',
@@ -1138,16 +1138,15 @@
                 elements.audio.src = CONFIG.STREAM_URL;
             }
             
-            logger.info('▶️ Reproducción DIRECTA (live)...');
+            logger.info('▶️ Play DIRECTO');
             
-            // Forzar recarga del stream para obtener audio FRESCO (no bufereado)
-            const currentSrc = elements.audio.src;
-            elements.audio.src = ''; // Limpiar
-            elements.audio.src = currentSrc + '?t=' + Date.now(); // URL única para evitar cache
-            elements.audio.load(); // Cargar el stream NUEVO
+            // Play con timeout de seguridad
+            const playPromise = elements.audio.play();
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Play timeout')), 10000)
+            );
             
-            // Ejecutar play() INMEDIATAMENTE sin esperar buffering
-            await elements.audio.play();
+            await Promise.race([playPromise, timeoutPromise]);
             
             state.userPaused = false;
             state.retryCount = 0;
@@ -1733,7 +1732,7 @@
             // Detener mensajes insistentes cuando se hace clic
             stopPlayMessageRotation();
             
-            await playAudio();
+            // Ocultar overlay y activar UI INMEDIATAMENTE
             elements.overlay.style.display = 'none';
             elements.logo.classList.add('active');
             
@@ -1743,17 +1742,28 @@
                 playerContent.classList.remove('blurred');
             }
             
-            updateCustomPlayButton();
+            // Reproducir (no bloqueante)
+            playAudio().then(() => {
+                updateCustomPlayButton();
+            }).catch(err => {
+                console.error('Error play:', err);
+                updateCustomPlayButton();
+            });
         });
 
         // Botón de play/pause personalizado
         elements.customPlayBtn.addEventListener('click', async () => {
             if (elements.audio.paused) {
-                await playAudio();
+                playAudio().then(() => {
+                    updateCustomPlayButton();
+                }).catch(err => {
+                    console.error('Error play:', err);
+                    updateCustomPlayButton();
+                });
             } else {
                 elements.audio.pause();
+                updateCustomPlayButton();
             }
-            updateCustomPlayButton();
         });
 
         // Slider de volumen

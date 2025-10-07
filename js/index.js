@@ -1138,41 +1138,16 @@
                 elements.audio.src = CONFIG.STREAM_URL;
             }
             
-            // Cargar solo si es necesario
-            if (elements.audio.readyState < 2) {
-                logger.dev('🎵 Cargando audio...');
-                elements.audio.load();
-                
-                // Espera mínima optimizada
-                const waitTime = isMobile ? 100 : 200;
-                await new Promise(resolve => setTimeout(resolve, waitTime));
-            }
+            logger.info('▶️ Reproducción DIRECTA (live)...');
             
-            logger.info('▶️ Iniciando reproducción...');
+            // Forzar recarga del stream para obtener audio FRESCO (no bufereado)
+            const currentSrc = elements.audio.src;
+            elements.audio.src = ''; // Limpiar
+            elements.audio.src = currentSrc + '?t=' + Date.now(); // URL única para evitar cache
+            elements.audio.load(); // Cargar el stream NUEVO
             
-            // Esperar a que esté listo para reproducir antes de ejecutar play()
-            if (elements.audio.readyState < 3) { // HAVE_FUTURE_DATA
-                await new Promise((resolve) => {
-                    const onCanPlay = () => {
-                        elements.audio.removeEventListener('canplay', onCanPlay);
-                        resolve();
-                    };
-                    elements.audio.addEventListener('canplay', onCanPlay);
-                    // Timeout de seguridad de 30s (más generoso)
-                    setTimeout(() => {
-                        elements.audio.removeEventListener('canplay', onCanPlay);
-                        resolve();
-                    }, 30000);
-                });
-            }
-            
-            // Ahora sí ejecutar play()
-            const playPromise = elements.audio.play();
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout de reproducción')), 5000)
-            );
-            
-            await Promise.race([playPromise, timeoutPromise]);
+            // Ejecutar play() INMEDIATAMENTE sin esperar buffering
+            await elements.audio.play();
             
             state.userPaused = false;
             state.retryCount = 0;

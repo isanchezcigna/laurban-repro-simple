@@ -1150,10 +1150,26 @@
             
             logger.info('▶️ Iniciando reproducción...');
             
-            // Timeout más generoso temporalmente
+            // Esperar a que esté listo para reproducir antes de ejecutar play()
+            if (elements.audio.readyState < 3) { // HAVE_FUTURE_DATA
+                await new Promise((resolve) => {
+                    const onCanPlay = () => {
+                        elements.audio.removeEventListener('canplay', onCanPlay);
+                        resolve();
+                    };
+                    elements.audio.addEventListener('canplay', onCanPlay);
+                    // Timeout de seguridad de 30s (más generoso)
+                    setTimeout(() => {
+                        elements.audio.removeEventListener('canplay', onCanPlay);
+                        resolve();
+                    }, 30000);
+                });
+            }
+            
+            // Ahora sí ejecutar play()
             const playPromise = elements.audio.play();
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout de reproducción')), 15000)
+                setTimeout(() => reject(new Error('Timeout de reproducción')), 5000)
             );
             
             await Promise.race([playPromise, timeoutPromise]);

@@ -140,7 +140,8 @@
         songStartTime: null, // Timestamp cuando empezó la canción actual
         songElapsed: 0, // Tiempo transcurrido de la canción según Azura (segundos)
         songDuration: 0, // Duración total de la canción (segundos)
-        hasStartedPlaying: false // Flag para saber si el usuario ya presionó play
+        hasStartedPlaying: false, // Flag para saber si el usuario ya presionó play
+        wasInterrupted: false // Flag para detectar interrupciones del sistema (Siri, llamadas, etc.)
     };
 
     // Frases históricas de La Urban
@@ -1213,6 +1214,39 @@
     }
 
     /**
+     * Reconecta al stream en vivo después de una interrupción
+     * Fuerza al navegador a obtener el punto más actual del stream
+     */
+    async function reconnectToLive() {
+        try {
+            console.log('🔄 Reconectando al punto más actual del stream...');
+            
+            // Guardar el estado de reproducción
+            const wasPlaying = !elements.audio.paused;
+            
+            // Forzar recarga del stream añadiendo timestamp único
+            const streamUrl = new URL(CONFIG.STREAM_URL);
+            streamUrl.searchParams.set('t', Date.now());
+            
+            // Reemplazar la fuente para forzar reconexión
+            elements.audio.src = streamUrl.toString();
+            
+            // Si estaba reproduciendo, reanudar inmediatamente
+            if (wasPlaying) {
+                try {
+                    await elements.audio.play();
+                    console.log('✅ Reconectado al vivo exitosamente');
+                } catch (playError) {
+                    console.error('❌ Error al reproducir después de reconectar:', playError);
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Error al reconectar al vivo:', error);
+        }
+    }
+
+    /**
      * Obtiene los datos actuales de la radio desde la API
      * @returns {Promise<Object|null>} Datos de la radio o null en caso de error
      */
@@ -1889,6 +1923,13 @@
             } else if (state.audioContext.state === 'suspended') {
                 state.audioContext.resume();
             }
+            
+            // Si se reanuda después de interrupción, forzar reconexión al vivo
+            if (state.wasInterrupted) {
+                console.log('🔄 Reconectando al vivo después de interrupción...');
+                state.wasInterrupted = false;
+                reconnectToLive();
+            }
         });
 
         // Audio paused - suspender visualizador
@@ -1898,6 +1939,13 @@
             updateCustomPlayButton();
             if (state.audioContext && state.audioContext.state === 'running') {
                 state.audioContext.suspend();
+            }
+            
+            // Detectar pausa por interrupción del sistema (Siri, llamada, etc.)
+            // Si NO fue el usuario quien pausó, marcarlo para reconexión
+            if (!state.userPaused && state.hasStartedPlaying) {
+                console.warn('⚠️ Pausa no causada por usuario - posible interrupción del sistema');
+                state.wasInterrupted = true;
             }
         });
 
@@ -2122,6 +2170,22 @@
 
     // Iniciar cuando el DOM esté listo
     document.addEventListener('DOMContentLoaded', init);
+
+    // Detectar cuando la app vuelve de background (después de Siri, llamadas, etc.)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && state.hasStartedPlaying && !elements.audio.paused) {
+            // La app volvió al frente y el audio está reproduciendo
+            // Verificar si necesitamos reconectar al vivo
+            console.log('👀 App visible - verificando estado del stream...');
+            
+            // Si hubo una interrupción, reconectar
+            if (state.wasInterrupted) {
+                console.log('🔄 Detectada interrupción previa - reconectando al vivo');
+                state.wasInterrupted = false;
+                reconnectToLive();
+            }
+        }
+    });
 
     // ========== FUNCIONES GLOBALES PARA TESTING DE LETRAS ==========
     

@@ -1072,6 +1072,9 @@
             artwork
         });
 
+        // Configurar el estado según si está reproduciendo
+        navigator.mediaSession.playbackState = elements.audio.paused ? 'paused' : 'playing';
+
         navigator.mediaSession.setActionHandler('play', playAudio);
         navigator.mediaSession.setActionHandler('pause', pauseAudio);
         navigator.mediaSession.setActionHandler('stop', pauseAudio);
@@ -1140,6 +1143,11 @@
             
             logger.info('▶️ Play DIRECTO');
             
+            // Configurar Media Session ANTES de reproducir para evitar spinner
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
+            
             // Play con timeout de seguridad
             const playPromise = elements.audio.play();
             const timeoutPromise = new Promise((_, reject) => 
@@ -1192,6 +1200,11 @@
     function pauseAudio() {
         state.userPaused = true;
         elements.audio.pause();
+        
+        // Actualizar Media Session
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.playbackState = 'paused';
+        }
         
         // Suspender el contexto de audio para ahorrar recursos
         if (state.audioContext && state.audioContext.state === 'running') {

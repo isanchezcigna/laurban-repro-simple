@@ -146,12 +146,32 @@
 
     // Frases históricas de La Urban
     const SLOGANS = [
-        'agudizando tus sentidos',
-        '¡todo el rato!',
-        'te pone bien!',
-        'un hit en tu ventana',
-        'sounds good',
-        'se vienen cositas'
+        'Desde el 2009, agudizando tus sentidos',
+        'Desde el 2010, yo escucho... radio urban',
+        'Desde el 2011, ¡Todo el rato!',
+        'Desde el 2012, ¡Te pone bien!',
+        'Desde el 2014, un hit en tu ventana',
+        'Desde el 2015, sounds good',
+        'Y pronto... se vienen cositas',
+        'Este pequeño fragmento de sitio...',
+        'Fue hecho con ❤️ por <a href="https://syntaxit.cl" target="_blank" rel="noopener noreferrer" class="syntax-link">Syntax It</a>',
+        'Un homenaje a nuestros locutores desde el día uno...',
+        '<a href="https://instagram.com/marcos.fabrizio" target="_blank" rel="noopener noreferrer" class="dj-link">Mr Pipo DJ</a> ❤️ | <a href="https://instagram.com/hector_barrza" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Tazs</a> ❤️ | <a href="https://instagram.com/kepecreative" target="_blank" rel="noopener noreferrer" class="dj-link">KepeCreative</a> ❤️',
+        '<a href="https://instagram.com/djdrinkscl" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Fakeman</a> ❤️ | <a href="https://instagram.com/dj_evil" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Evil</a> ❤️ | <a href="https://instagram.com/dj_draz" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Draz</a> ❤️',
+        '<a href="https://instagram.com/iintakgram" target="_blank" rel="noopener noreferrer" class="dj-link">Intak</a> ❤️ | <a href="https://instagram.com/arelex.djrulox" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Rulox</a> ❤️ | <a href="https://instagram.com/sombrasanchez" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Sombra</a> ❤️',
+        'KururoStyle ❤️ | <a href="https://instagram.com/gato_king" target="_blank" rel="noopener noreferrer" class="dj-link">GatoKing</a> ❤️ | <a href="https://instagram.com/blankoh.wav" target="_blank" rel="noopener noreferrer" class="dj-link">Blankoh</a> ❤️',
+        '<a href="https://instagram.com/rorromix" target="_blank" rel="noopener noreferrer" class="dj-link">RorroMix</a> ❤️ | PathiitoCrazy ❤️ | DJ Washito ❤️',
+        '<a href="https://instagram.com/dinoinostroza" target="_blank" rel="noopener noreferrer" class="dj-link">Dino</a> ❤️ | Diego Gomez ❤️ | <a href="https://instagram.com/juniorfernandescl" target="_blank" rel="noopener noreferrer" class="dj-link">Junior Fernandes</a> ❤️',
+        'DJ Poke ❤️ | Jaimitho ❤️ | Pistasho ❤️',
+        'Y tantos otros que hubieron...',
+        'A nuestros mayores seguidores ❤️',
+        'A las familias que se formaron...',
+        'Tantas historias lindas, tantos recuerdos...',
+        'Ya vamos para 15 años de radio...',
+        'Y seguimos aquí, como el primer día...',
+        'Gracias por ser parte de esto, por escucharnos',
+        'Gracias por dejarnos entrar a tu vida',
+        'Gracias por dejarnos ser un lindo recuerdo'
     ];
 
     // Frases insistentes chilenas para el botón de play 😄
@@ -159,18 +179,18 @@
         { text: 'Dale play y disfruta', emoji: '🎧' },
         { text: 'dale play no seas tímido', emoji: '😳' },
         { text: 'dale play mojojojo', emoji: '🐵' },
-        { text: 'dale play o andai roando?', emoji: '🔪' },
-        { text: 'dale play o andai laando?', emoji: '🧼' },
-        { text: 'oye y el play pa cuándo?', emoji: '⏰' },
-        { text: 'dale play po compadre', emoji: '🤠' },
-        { text: 'apreta el play o te sapeo', emoji: '👀' },
+        { text: 'dale play o andai con la pera?', emoji: '🍐' },
+        { text: 'dale play o eri lavadora?', emoji: '🧼' },
+        { text: 'yapo yapo y el play pa cuándo?', emoji: '⏰' },
+        { text: 'dele play compita', emoji: '🤠' },
+        { text: 'dale play o te sapeo', emoji: '👀' },
         { text: 'dale play y ponte vío', emoji: '😎' },
-        { text: 'el play se va a poner solito?', emoji: '🤔' },
-        { text: 'apreta esa wea de play', emoji: '👆' },
-        { text: 'dale play antes que me enoje', emoji: '😤' },
+        { text: 'el play no sé pone solito?', emoji: '🤔' },
+        { text: 'apreta la wea de play', emoji: '👆' },
+        { text: 'vamo a pelear terrible brigido', emoji: '😤' },
         { text: 'que tanto color con el play?', emoji: '🤷' },
         { text: 'dale play o te banneo', emoji: '⛔' },
-        { text: 'apreta el play porfaaaaa', emoji: '🥺' }
+        { text: 'ya, perdón, solo dale play y listo', emoji: '🥺' }
     ];
 
     // Referencias a elementos DOM (se inicializarán en DOMContentLoaded)
@@ -816,8 +836,8 @@
         const sloganText = document.getElementById('sloganText');
         if (!sloganText) return;
 
-        // Empezar en posición aleatoria
-        state.currentSloganIndex = Math.floor(Math.random() * SLOGANS.length);
+        // Empezar SIEMPRE desde el principio (índice 0)
+        state.currentSloganIndex = 0;
         updateSlogan();
 
         // Rotar cada 8 segundos
@@ -840,8 +860,8 @@
         sloganText.classList.add('fade-out');
         
         setTimeout(() => {
-            // Cambiar texto - siempre "Desde el 2009" + frase rotativa
-            sloganText.textContent = `Desde el 2009 ${slogan}`;
+            // Cambiar texto - usar innerHTML para soportar enlaces HTML
+            sloganText.innerHTML = slogan;
             
             // Fade in
             sloganText.classList.remove('fade-out');
@@ -1557,7 +1577,19 @@
                 }
             }
 
-            const response = await fetch(url);
+            let response = await fetch(url);
+            let usedSecondAttempt = false; // Flag para saber si usó el segundo intento
+            
+            // Si falla con 404 y había duration, reintentar sin duration
+            if (!response.ok && response.status === 404 && duration) {
+                if (!silent) {
+                    logger.info('🔄 Reintentando búsqueda sin parámetro de duración...');
+                }
+                
+                const urlWithoutDuration = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
+                response = await fetch(urlWithoutDuration);
+                usedSecondAttempt = true; // Marcamos que usó el segundo intento
+            }
             
             if (!response.ok) {
                 // Limpiar letras silenciosamente si no hay disponibles
@@ -1594,14 +1626,23 @@
                     }
                 });
                 
-                // Cargar letras con el offset de tiempo transcurrido
-                state.lyricsManager.loadLyrics(lyrics, elapsed);
+                // Determinar delay según el intento que funcionó
+                // Segundo intento (sin duration) = 0.5s delay (temporal)
+                // Primer intento (con duration) = null (usa delay por defecto original)
+                const customDelay = usedSecondAttempt ? 0.5 : null;
+                
+                // Cargar letras con el offset de tiempo transcurrido y delay personalizado
+                state.lyricsManager.loadLyrics(lyrics, elapsed, customDelay);
                 
                 // Log solo si no es silencioso
                 if (!silent) {
-                    logger.success(`✅ Letras cargadas: ${lyrics.length} líneas (inicio en ${elapsed.toFixed(2)}s)`);
+                    const delayInfo = usedSecondAttempt ? '0.5s (búsqueda sin duración)' : 'normal (por defecto)';
+                    logger.success(`✅ Letras cargadas: ${lyrics.length} líneas (inicio: ${elapsed.toFixed(2)}s, delay: ${delayInfo})`);
                     console.log('%c🎤 LETRAS SINCRONIZADAS', 'background: #fc5e16; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;');
                     console.log(`Sincronizadas desde el segundo ${elapsed.toFixed(2)} de la canción`);
+                    if (usedSecondAttempt) {
+                        console.log('⚡ Delay ajustado a 0.5s por búsqueda sin duración exacta');
+                    }
                 }
             } else {
                 // Limpiar letras si solo hay letras sin sincronización

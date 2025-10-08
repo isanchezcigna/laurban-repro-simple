@@ -1954,3 +1954,69 @@ audio::-webkit-media-controls-fullscreen-button {
         max-height: -webkit-fill-available;
     }
 }
+
+/* ========== ANIMACIÓN BRILLO POTENTE PARA ENLACES ========== */
+/* Enlace Syntax It - Super llamativo con brillo pulsante */
+.syntax-link {
+    color: #fc5e16 !important;
+    font-weight: 900 !important;
+    text-decoration: underline !important;
+    text-shadow: 
+        0 0 10px rgba(252, 94, 22, 0.8),
+        0 0 20px rgba(252, 94, 22, 0.6),
+        0 0 30px rgba(252, 94, 22, 0.4);
+    animation: glow-pulse 2s ease-in-out infinite;
+    transition: all 0.3s ease;
+}
+
+.syntax-link:hover {
+    color: #ff7a3d !important;
+    text-shadow: 
+        0 0 15px rgba(252, 94, 22, 1),
+        0 0 25px rgba(252, 94, 22, 0.8),
+        0 0 35px rgba(252, 94, 22, 0.6),
+        0 0 45px rgba(252, 94, 22, 0.4);
+    transform: scale(1.1);
+}
+
+/* Enlaces sobrios para locutores/colaboradores - color naranja fijo */
+.dj-link {
+    color: #fc5e16 !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    border-bottom: 1px solid rgba(252, 94, 22, 0.3);
+    text-shadow: 0 0 3px rgba(252, 94, 22, 0.2);
+    transition: all 0.3s ease;
+}
+
+.dj-link:hover {
+    color: #ff7a3d !important;
+    border-bottom-color: rgba(252, 94, 22, 0.6);
+    text-shadow: 0 0 6px rgba(252, 94, 22, 0.35);
+    transform: translateY(-1px);
+}
+
+@keyframes glow-pulse {
+    0% {
+        text-shadow: 
+            0 0 10px rgba(252, 94, 22, 0.8),
+            0 0 20px rgba(252, 94, 22, 0.6),
+            0 0 30px rgba(252, 94, 22, 0.4);
+        transform: scale(1);
+    }
+    50% {
+        text-shadow: 
+            0 0 20px rgba(252, 94, 22, 1),
+            0 0 30px rgba(252, 94, 22, 0.8),
+            0 0 40px rgba(252, 94, 22, 0.6),
+            0 0 50px rgba(252, 94, 22, 0.4);
+        transform: scale(1.05);
+    }
+    100% {
+        text-shadow: 
+            0 0 10px rgba(252, 94, 22, 0.8),
+            0 0 20px rgba(252, 94, 22, 0.6),
+            0 0 30px rgba(252, 94, 22, 0.4);
+        transform: scale(1);
+    }
+}

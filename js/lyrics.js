@@ -33,6 +33,7 @@ class LyricsManager {
         this.songStartTimestamp = null; // Timestamp cuando empezó a contar
         this.useVirtualTime = false; // Si usa tiempo virtual basado en Azura
         this.updateInterval = null; // Intervalo para actualizar letras
+        this.customDelay = null; // Delay personalizado (null = usar LYRICS_CONFIG.STREAM_DELAY)
     }
 
     /**
@@ -56,14 +57,16 @@ class LyricsManager {
      * Carga letras desde un array con formato: [{time: segundos, text: "letra"}]
      * @param {Array} lyricsData - Array de objetos con time y text
      * @param {Number} startOffset - Tiempo inicial transcurrido en segundos (opcional)
+     * @param {Number|null} customDelay - Delay personalizado en segundos (null = usar delay por defecto)
      */
-    loadLyrics(lyricsData, startOffset = 0) {
+    loadLyrics(lyricsData, startOffset = 0, customDelay = null) {
         // Ordenar letras por tiempo (crear nueva copia para no mutar el original)
         this.lyrics = [...lyricsData].sort((a, b) => a.time - b.time);
         this.currentIndex = -1;
         this.timeOffset = startOffset;
         this.songStartTimestamp = Date.now();
         this.useVirtualTime = startOffset > 0; // Usar tiempo virtual si hay offset
+        this.customDelay = customDelay; // Guardar delay personalizado
         
         if (this.lyrics.length > 0) {
             this.show();
@@ -73,7 +76,8 @@ class LyricsManager {
                 this.startVirtualTimeUpdate();
             }
             
-            console.log(`Loaded ${this.lyrics.length} lyrics lines (offset: ${startOffset.toFixed(2)}s)`);
+            const delayUsed = customDelay !== null ? customDelay : LYRICS_CONFIG.STREAM_DELAY;
+            console.log(`Loaded ${this.lyrics.length} lyrics lines (offset: ${startOffset.toFixed(2)}s, delay: ${delayUsed.toFixed(2)}s)`);
         } else {
             this.hide();
         }
@@ -115,7 +119,9 @@ class LyricsManager {
             // Tiempo virtual = offset inicial + tiempo transcurrido desde que se cargó
             const elapsed = (Date.now() - this.songStartTimestamp) / 1000;
             // Restar delay para compensar latencia del stream
-            return Math.max(0, this.timeOffset + elapsed - LYRICS_CONFIG.STREAM_DELAY);
+            // Usar customDelay si está definido, sino usar el delay por defecto
+            const delay = this.customDelay !== null ? this.customDelay : LYRICS_CONFIG.STREAM_DELAY;
+            return Math.max(0, this.timeOffset + elapsed - delay);
         } else {
             // Tiempo del elemento de audio
             return this.audioElement ? this.audioElement.currentTime : 0;
@@ -239,6 +245,7 @@ class LyricsManager {
         this.timeOffset = 0;
         this.songStartTimestamp = null;
         this.useVirtualTime = false;
+        this.customDelay = null; // Limpiar delay personalizado
         this.stopVirtualTimeUpdate();
         
         if (this.lyricsCurrent) this.lyricsCurrent.textContent = '';

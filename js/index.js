@@ -155,14 +155,14 @@
         'Y pronto... se vienen cositas',
         'Este pequeño fragmento de sitio...',
         'Fue hecho con ❤️ por <a href="https://syntaxit.cl" target="_blank" rel="noopener noreferrer" class="syntax-link">Syntax It</a>',
-        'Un homenaje a nuestros locutores desde el día uno...',
+        'Un homenaje a nuestros colaboradores desde el día uno...',
         '<a href="https://instagram.com/marcos.fabrizio" target="_blank" rel="noopener noreferrer" class="dj-link">Mr Pipo DJ</a> ❤️ | <a href="https://instagram.com/hector_barrza" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Tazs</a> ❤️ | <a href="https://instagram.com/kepecreative" target="_blank" rel="noopener noreferrer" class="dj-link">KepeCreative</a> ❤️',
-        '<a href="https://instagram.com/djdrinkscl" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Fakeman</a> ❤️ | <a href="https://instagram.com/dj_evil" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Evil</a> ❤️ | <a href="https://instagram.com/dj_draz" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Draz</a> ❤️',
+        '<a href="https://instagram.com/djdrinkscl" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Fakeman</a> ❤️ | <a href="https://instagram.com/heyheychriss" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Evil</a> ❤️ | <a href="https://instagram.com/dj_draz" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Draz</a> ❤️',
         '<a href="https://instagram.com/iintakgram" target="_blank" rel="noopener noreferrer" class="dj-link">Intak</a> ❤️ | <a href="https://instagram.com/arelex.djrulox" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Rulox</a> ❤️ | <a href="https://instagram.com/sombrasanchez" target="_blank" rel="noopener noreferrer" class="dj-link">DJ Sombra</a> ❤️',
         'KururoStyle ❤️ | <a href="https://instagram.com/gato_king" target="_blank" rel="noopener noreferrer" class="dj-link">GatoKing</a> ❤️ | <a href="https://instagram.com/blankoh.wav" target="_blank" rel="noopener noreferrer" class="dj-link">Blankoh</a> ❤️',
         '<a href="https://instagram.com/rorromix" target="_blank" rel="noopener noreferrer" class="dj-link">RorroMix</a> ❤️ | PathiitoCrazy ❤️ | DJ Washito ❤️',
         '<a href="https://instagram.com/dinoinostroza" target="_blank" rel="noopener noreferrer" class="dj-link">Dino</a> ❤️ | Diego Gomez ❤️ | <a href="https://instagram.com/juniorfernandescl" target="_blank" rel="noopener noreferrer" class="dj-link">Junior Fernandes</a> ❤️',
-        'DJ Poke ❤️ | Jaimitho ❤️ | Pistasho ❤️',
+        'DJ Poke ❤️ | Cris Ayora ❤️ | Pistasho ❤️',
         'Y tantos otros que hubieron...',
         'A nuestros mayores seguidores ❤️',
         'A las familias que se formaron...',
@@ -474,6 +474,7 @@
 
     /**
      * Aplica efectos visuales al logo basados en las frecuencias de audio con énfasis en kick
+     * OPTIMIZADO: Usa translate3d para aceleración GPU y reduce manipulaciones de estilo
      * @param {number} kickScale - Escala del kick detectado (1.0-1.25)
      * @param {number} subBass - Intensidad sub-bass (0-1)
      * @param {number} bass - Intensidad bass (0-1)
@@ -489,52 +490,50 @@
 
         // KICK domina la escala - 90% kick, 10% mids
         const kickContribution = (kickScale - 1) * 0.9;
-        const midContribution = mid * 0.01; // Mids muy sutiles en escala
+        const midContribution = mid * 0.01;
         const scale = (1.0 + kickContribution + midContribution) * bpmMultiplier;
         
-        // Rotación: Mids suaves (casi la mitad del efecto anterior)
-        const rotation = ((mid + highMid) / 2 - 0.5) * 4 * bpmMultiplier; // Reducido de 8 a 4
+        // Rotación: Mids suaves
+        const rotation = ((mid + highMid) / 2 - 0.5) * 4 * bpmMultiplier;
         
-        // Brillo: Kick domina, mids aportan sutilmente
-        const kickBrightness = (kickScale - 1) * 0.6; // 60% del kick
-        const midBrightness = (mid + highMid) / 2 * 0.1; // Solo 10% de mids
+        // Movimiento vertical: SOLO el kick comanda el salto
+        let verticalMove = 0;
+        if (kickScale > 1.1) {
+            verticalMove = (kickScale - 1) * 25;
+        }
+        
+        // Efecto de impacto en kicks muy fuertes
+        let scaleX = 1;
+        if (kickScale > 1.2) {
+            const impact = (kickScale - 1.2) * 3;
+            scaleX = 1 + impact * 0.1;
+        }
+        
+        // OPTIMIZACIÓN: Una sola manipulación de transform con translate3d para GPU
+        elements.logo.style.transform = `translate3d(0, ${-verticalMove}px, 0) scale(${scale}) scaleX(${scaleX}) rotate(${rotation}deg)`;
+        
+        // Brillo y saturación (menos costoso que antes)
+        const kickBrightness = (kickScale - 1) * 0.6;
+        const midBrightness = (mid + highMid) / 2 * 0.1;
         const brightness = 1 + kickBrightness + midBrightness;
         
-        // Saturación: Kick principalmente, mids como acento
         const kickSaturation = (kickScale - 1) * 0.4;
-        const midSaturation = ((mid + highMid) / 2) * 0.15; // Reducido de 0.4 a 0.15
+        const midSaturation = ((mid + highMid) / 2) * 0.15;
         const saturation = 1 + kickSaturation + midSaturation;
         
-        // Sombra: Kick DOMINA completamente, mids casi no afectan
-        const kickShadow = (kickScale - 1) * 65; // 65px máximo en kick
-        const bassShadow = bass * 15; // Bass base sutil
-        const midShadow = mid * 5; // Mids muy sutiles (reducido de 10 a 5)
+        // Sombra: Kick domina
+        const kickShadow = (kickScale - 1) * 65;
+        const bassShadow = bass * 15;
+        const midShadow = mid * 5;
         const shadowIntensity = 15 + bassShadow + midShadow + kickShadow;
         
         const kickOpacity = (kickScale - 1) * 0.55;
         const bassOpacity = bass * 0.25;
-        const midOpacity = mid * 0.05; // Mids muy sutiles
+        const midOpacity = mid * 0.05;
         const shadowOpacity = 0.4 + bassOpacity + midOpacity + kickOpacity;
-        const shadowColor = `rgba(252, 94, 22, ${shadowOpacity})`;
         
-        // Movimiento vertical: SOLO el kick comanda el salto (golpe)
-        let verticalMove = 0;
-        if (kickScale > 1.1) {
-            // El salto es proporcional al kick, mids NO afectan
-            verticalMove = (kickScale - 1) * 25; // Aumentado de 20 a 25 para más impacto
-        }
-        
-        // Aplicar transformaciones - KICK es el protagonista
-        elements.logo.style.transform = `scale(${scale}) rotate(${rotation}deg) translateY(-${verticalMove}px)`;
-        elements.logo.style.filter = `brightness(${brightness}) saturate(${saturation})`;
-        elements.logo.style.filter += ` drop-shadow(0 0 ${shadowIntensity}px ${shadowColor})`;
-        
-        // Bonus: Efecto de "impacto" visual en kicks muy fuertes
-        if (kickScale > 1.2) {
-            // Pequeña distorsión en X para simular "golpe"
-            const impact = (kickScale - 1.2) * 3;
-            elements.logo.style.transform += ` scaleX(${1 + impact * 0.1})`;
-        }
+        // OPTIMIZACIÓN: Una sola manipulación de filter
+        elements.logo.style.filter = `brightness(${brightness}) saturate(${saturation}) drop-shadow(0 0 ${shadowIntensity}px rgba(252, 94, 22, ${shadowOpacity}))`;
     }
 
     /**
@@ -609,6 +608,7 @@
 
     /**
      * Aplica efectos visuales VISIBLES al background basados en frecuencias ALTAS
+     * OPTIMIZADO: Reduce cálculos y usa translate3d para GPU
      * El background reacciona a highs/mids (complementario al logo que reacciona a kick/bass)
      * @param {number} highs - Intensidad de agudos (0-1) - hi-hats, platillos
      * @param {number} highMids - Intensidad de agudos-medios (0-1) - voces agudas
@@ -620,35 +620,27 @@
             return;
         }
 
-        // Opacidad ULTRA SUTIL - apenas perceptible
-        const opacity = 0.09 + (highs * 0.3) + (highMids * 0.15); // 0.02 a 0.065 (ULTRA SUTIL!)
+        // Opacidad ULTRA SUTIL
+        const opacity = 0.09 + (highs * 0.3) + (highMids * 0.15);
         
-        // Hue shift MÁS DRAMÁTICO
-        const hueShift = (highs * 60) - (mids * 20); // -20 a +60 grados
+        // Hue shift
+        const hueShift = (highs * 60) - (mids * 20);
         
-        // Saturación MÁS INTENSA
-        const saturation = 1.2 + (highs * 1.2) + (highMids * 0.5); // 1.2 a 2.9
+        // Saturación
+        const saturation = 1.2 + (highs * 1.2) + (highMids * 0.5);
         
-        // Brillo MÁS EVIDENTE
-        const brightness = 1.1 + (highMids * 0.7) + (highs * 0.5); // 1.1 a 2.3
+        // Brillo
+        const brightness = 1.1 + (highMids * 0.7) + (highs * 0.5);
         
-        // Scale más pronunciado
-        const scale = 1 + (highs * 0.18) + (highMids * 0.09); // 1.0 a 1.27
+        // Scale
+        const scale = 1 + (highs * 0.18) + (highMids * 0.09);
         
-        // Aplicar filtros - Opacity muy sutil, otros efectos visibles
+        // OPTIMIZACIÓN: Aplicar todo en menos manipulaciones
         elements.backgroundOverlay.style.opacity = opacity;
         elements.backgroundOverlay.style.filter = `brightness(${brightness}) saturate(${saturation}) hue-rotate(${hueShift}deg)`;
-        elements.backgroundOverlay.style.transform = `scale(${scale})`;
+        // Usar translate3d para aceleración GPU
+        elements.backgroundOverlay.style.transform = `translate3d(0, 0, 0) scale(${scale})`;
         
-        // Background texture con cambios MÁS EVIDENTES
-        const bgHue = (highMids * 30) + (mids * 18) - (highs * 12); // -12 a +48 grados
-        const bgSaturation = 1.2 + (highs * 0.6) + (mids * 0.3); // 1.2 a 2.1
-        const bgBrightness = 1.1 + (highMids * 0.35) + (highs * 0.25); // 1.1 a 1.7
-        
-        document.documentElement.style.setProperty('--bg-hue', `${bgHue}deg`);
-        document.documentElement.style.setProperty('--bg-saturation', bgSaturation);
-        document.documentElement.style.setProperty('--bg-brightness', bgBrightness);
-
         // Animar ondas SVG con el audio
         animateWaves(bass, mids, highs);
     }
@@ -840,11 +832,11 @@
         state.currentSloganIndex = 0;
         updateSlogan();
 
-        // Rotar cada 8 segundos
+        // Rotar cada 5 segundos
         state.sloganInterval = setInterval(() => {
             state.currentSloganIndex = (state.currentSloganIndex + 1) % SLOGANS.length;
             updateSlogan();
-        }, 8000);
+        }, 5000);
     }
 
     /**

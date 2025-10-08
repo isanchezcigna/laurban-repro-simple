@@ -55,50 +55,53 @@ body::before {
     height: 120%;
     background-image: url('../img/background.png');
     background-repeat: repeat;
-    background-size: 400px 400px; /* Tamaño fijo para controlar el patrón */
+    background-size: 400px 400px;
     opacity: 0.5;
     pointer-events: none;
     z-index: -1;
-    transition: filter 0.12s ease-out;
-    will-change: filter, background-position;
-    filter: hue-rotate(var(--bg-hue)) saturate(var(--bg-saturation)) brightness(var(--bg-brightness));
-    /* Animación infinita usando background-position en lugar de transform */
+    /* Animación suave con background-position (bucle perfecto) */
     animation: infiniteScroll 30s linear infinite;
+    /* Aceleración GPU con will-change específico */
+    will-change: background-position;
 }
 
 @keyframes infiniteScroll {
+    /* Bucle perfecto: mueve exactamente el tamaño del patrón */
     0% {
         background-position: 0 0;
     }
     100% {
-        background-position: 400px 400px; /* Se mueve exactamente el tamaño del patrón */
+        background-position: 400px 400px;
     }
 }
 
 /* SVG de ondas animadas en el fondo */
 .wave-background {
     position: fixed;
-    bottom: -50%; /* Posición desde abajo para que no se corte */
+    bottom: -50%;
     left: 0;
     width: 200%;
-    height: 200%; /* Más alto para cubrir toda la pantalla */
+    height: 200%;
     pointer-events: none;
     z-index: -2;
-    opacity: 0; /* Oculto inicialmente, se muestra al dar play */
+    opacity: 0;
     mix-blend-mode: screen;
-    transition: opacity 0.5s ease-out, transform 0.1s ease-out;
-    will-change: opacity, transform;
+    transition: opacity 0.5s ease-out;
     transform-origin: bottom center;
+    /* Optimización GPU */
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
 /* Mostrar olas cuando el audio está reproduciéndose - MODO NOCHE (más sutil) */
 body.audio-playing .wave-background {
-    opacity: 0.25; /* Modo noche: mucho más transparente */
+    opacity: 0.25;
 }
 
 /* Mostrar olas cuando el audio está reproduciéndose - MODO DÍA (más visible) */
 body.theme-day.audio-playing .wave-background {
-    opacity: 0.6; /* Modo día: mantiene la visibilidad original */
+    opacity: 0.6;
 }
 
 /* Overlay animado para el background - ULTRA SUTIL */
@@ -114,16 +117,16 @@ body.theme-day.audio-playing .wave-background {
         var(--accent-glow-soft) 60%,
         var(--accent-glow) 80%,
         transparent 95%);
-    opacity: 0.04; /* Apenas perceptible */
+    opacity: 0.04;
     pointer-events: none;
     z-index: 0;
-    transition: opacity 0.12s ease-out, 
-                filter 0.12s ease-out,
-                transform 0.15s ease-out,
-                background 0.5s ease-out;
-    will-change: opacity, filter, transform;
+    transition: opacity 0.1s ease-out;
     transform-origin: center center;
-    mix-blend-mode: screen; /* Screen para mayor visibilidad */
+    mix-blend-mode: screen;
+    /* Optimización GPU */
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
 /* Ajustes específicos para contenedores - Card más bonito */
@@ -165,11 +168,13 @@ body.theme-day.audio-playing .wave-background {
     height: auto;
     margin-bottom: 20px;
     text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    transition: transform 0.03s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
-                filter 0.05s ease-out, 
-                max-width 0.5s ease;
-    will-change: transform, filter;
+    /* Optimización: transiciones más suaves y rápidas */
+    transition: max-width 0.3s ease;
     transform-origin: center center;
+    /* Aceleración GPU */
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
     /* Protección contra interacciones */
     user-select: none;
     -webkit-user-select: none;
@@ -179,8 +184,10 @@ body.theme-day.audio-playing .wave-background {
     -webkit-user-drag: none;
     -webkit-touch-callout: none;
 }
+
 .logo.active {
-    /* La animación base ahora es controlada por el visualizador de audio */
+    /* La animación es controlada por JavaScript con requestAnimationFrame */
+    /* Solo activar will-change cuando está animando */
     will-change: transform, filter;
 }
 @keyframes colorChange {

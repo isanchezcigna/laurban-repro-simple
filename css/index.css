@@ -353,6 +353,28 @@ body.theme-day.audio-playing .wave-background {
 }
 
 /* ========== LETRAS SINCRONIZADAS SOBRE EL COVER ========== */
+
+/* Overlay oscuro que aparece cuando hay letras - FADE SUBLIME */
+.lyrics-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0);
+    pointer-events: none;
+    z-index: 4;
+    border-radius: 15px;
+    transition: background 1.2s ease-in-out, opacity 1.2s ease-in-out;
+    opacity: 0;
+}
+
+/* Cuando hay letras activas, oscurecer suavemente */
+.lyrics-backdrop.active {
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 1;
+}
+
 .lyrics-overlay {
     position: absolute;
     bottom: 0;
@@ -371,6 +393,15 @@ body.theme-day.audio-playing .wave-background {
     z-index: 5;
     min-height: 100px;
     border-radius: 0 0 15px 15px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
+}
+
+/* Cuando hay letras, mostrar el overlay con fade sublime */
+.lyrics-overlay.active {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .lyrics-line {

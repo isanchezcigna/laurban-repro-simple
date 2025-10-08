@@ -25,6 +25,7 @@ class LyricsManager {
         this.lyrics = [];
         this.currentIndex = -1;
         this.lyricsOverlay = document.getElementById('lyricsOverlay');
+        this.lyricsBackdrop = document.getElementById('lyricsBackdrop');
         this.lyricsPrevious = document.getElementById('lyricsPrevious');
         this.lyricsCurrent = document.getElementById('lyricsCurrent');
         this.audioElement = null;
@@ -217,21 +218,36 @@ class LyricsManager {
     }
 
     /**
-     * Muestra el overlay de letras
+     * Muestra el overlay de letras con fade suave
      */
     show() {
         if (this.lyricsOverlay) {
             this.lyricsOverlay.style.display = 'flex';
+            // Pequeño delay para que la transición CSS funcione
+            setTimeout(() => {
+                this.lyricsOverlay.classList.add('active');
+                if (this.lyricsBackdrop) {
+                    this.lyricsBackdrop.classList.add('active');
+                }
+            }, 50);
             this.isActive = true;
         }
     }
 
     /**
-     * Oculta el overlay de letras
+     * Oculta el overlay de letras con fade suave
      */
     hide() {
         if (this.lyricsOverlay) {
-            this.lyricsOverlay.style.display = 'none';
+            // Fade out
+            this.lyricsOverlay.classList.remove('active');
+            if (this.lyricsBackdrop) {
+                this.lyricsBackdrop.classList.remove('active');
+            }
+            // Esperar a que termine la transición antes de ocultar
+            setTimeout(() => {
+                this.lyricsOverlay.style.display = 'none';
+            }, 1200); // 1.2s = duración de la transición CSS
             this.isActive = false;
         }
     }

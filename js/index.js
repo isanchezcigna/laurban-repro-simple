@@ -261,11 +261,14 @@
             return; // Ya está inicializado
         }
 
+        // TEMPORALMENTE DESHABILITADO - Permitir visualizador en móviles para pruebas
         // En móviles o desarrollo local, NO inicializar el visualizador
         // Esto evita que el audio se silencie por problemas de CORS
         
         // ✅ OPTIMIZADO PARA MÓVILES - Puerto 8010 con CORS + tiempos reducidos
         // Sin embargo, móviles tienen limitaciones con Web Audio API, mejor desactivar
+        // COMENTADO TEMPORALMENTE PARA PRUEBAS EN MÓVILES
+        /*
         if (isMobileDevice()) {
             console.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para mejor compatibilidad');
             console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
@@ -280,6 +283,7 @@
             }
             return;
         }
+        */
 
         // if (isLocalDevelopment()) {
         //     console.warn('🔧 Desarrollo local detectado - Visualizador deshabilitado (sin CORS)');

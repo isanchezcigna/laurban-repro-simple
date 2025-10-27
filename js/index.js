@@ -5,6 +5,18 @@
 
 (function () {
     'use strict';
+    
+    if (!window.logger) {
+        window.logger = {
+            dev: console.log.bind(console),
+            info: console.log.bind(console),
+            success: console.log.bind(console),
+            warn: console.warn.bind(console),
+            error: console.error.bind(console),
+            critical: console.error.bind(console)
+        };
+    }
+    // Ya tenemos logger definido en el ámbito global
 
     // Suprimir TODOS los errores de extensiones del navegador de forma más agresiva
     const originalError = console.error;
@@ -225,7 +237,7 @@
      * - Desarrollo: Todos los logs
      * - Producción: Solo errores y logs esenciales
      */
-    const logger = {
+    const logger = window.logger || {
         // Logs de desarrollo (solo en local)
         dev: function(...args) {
             if (isLocalDevelopment()) {
@@ -238,6 +250,11 @@
             console.log(...args);
         },
         
+        // Logs esenciales de éxito
+        success: function(...args) {
+            console.log(...args);
+        },
+        
         // Warnings (siempre se muestran)
         warn: function(...args) {
             console.warn(...args);
@@ -245,6 +262,11 @@
         
         // Errores (siempre se muestran)
         error: function(...args) {
+            console.error(...args);
+        },
+        
+        // Errores críticos (siempre se muestran)
+        critical: function(...args) {
             console.error(...args);
         },
         
@@ -273,9 +295,9 @@
         // COMENTADO TEMPORALMENTE PARA PRUEBAS EN MÓVILES
         
         if (isMobileDevice()) {
-            console.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para mejor compatibilidad');
-            console.log('ℹ️ El audio funcionará perfectamente, pero sin efectos visuales reactivos');
-            console.log('💡 Usa animación CSS simple en su lugar');
+            logger.warn('📱 Dispositivo móvil detectado - Visualizador deshabilitado para mejor compatibilidad');
+            logger.info('El audio funcionará perfectamente, pero sin efectos visuales reactivos');
+            logger.info('Usa animación CSS simple en su lugar');
             
             state.isVisualizerActive = true; // Para que las funciones de visualización sepan que está "activo"
             
@@ -322,10 +344,10 @@
                     state.audioSource = state.audioContext.createMediaElementSource(elements.audio);
                     state.audioSource.connect(state.analyser);
                     state.analyser.connect(state.audioContext.destination);
-                    console.log('✅ Audio source conectado al visualizador');
+                    logger.success('✅ Audio source conectado al visualizador');
                 } catch (corsError) {
-                    console.warn('⚠️ No se pudo conectar el audio al visualizador (CORS):', corsError.message);
-                    console.log('ℹ️ El audio funcionará, pero sin análisis de frecuencias en tiempo real');
+                    logger.warn('No se pudo conectar el audio al visualizador (CORS):', corsError.message);
+                    logger.info('El audio funcionará, pero sin análisis de frecuencias en tiempo real');
                     // No crear el source - dejar que el audio se reproduzca normalmente
                     state.audioSource = null;
                 }
@@ -351,8 +373,8 @@
             logger.info('🎨 Efectos visuales reactivos completos disponibles');
             
         } catch (error) {
-            console.warn('⚠️ No se pudo inicializar el visualizador de audio:', error.message);
-            console.log('ℹ️ El audio seguirá funcionando normalmente sin efectos visuales');
+            logger.warn('⚠️ No se pudo inicializar el visualizador de audio:', error.message);
+            logger.info('ℹ️ El audio seguirá funcionando normalmente sin efectos visuales');
             
             // Limpiar el audioSource si falla para evitar problemas
             state.audioSource = null;
@@ -378,7 +400,7 @@
 
         // Si no hay analyser (problema de CORS), usar animación simple basada en tiempo
         if (!state.analyser || !state.audioSource) {
-            console.log('ℹ️ Usando animación simple (sin análisis de audio)');
+            logger.info('ℹ️ Usando animación simple (sin análisis de audio)');
             if (elements.logo) {
                 elements.logo.style.animation = 'pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite';
             }
@@ -554,7 +576,7 @@
 
         // Si no hay analyser (problema de CORS), usar animación suave constante
         if (!state.analyser || !state.audioSource) {
-            console.log('ℹ️ Usando animación de fondo simple (sin análisis de audio)');
+            logger.info('ℹ️ Usando animación de fondo simple (sin análisis de audio)');
             // Las olas ya tienen su movimiento suave en CSS/JS
             return;
         }
@@ -996,7 +1018,7 @@
             updateWaveColors('#00d9ff', '#0099ff', '#00ffff'); // Cyan/Azul
         }
         
-        console.log(`🌅 Tema actualizado: ${isDaytime ? 'DÍA' : 'NOCHE'} (hora actual: ${hour}:00)`);
+        logger.info(`🌅 Tema actualizado: ${isDaytime ? 'DÍA' : 'NOCHE'} (hora actual: ${hour}:00)`);
     }
 
     /**
@@ -1035,7 +1057,7 @@
             gradient3[2].style.stopColor = hexToRgba(color1, 0.25);
         }
 
-        console.log(`🌊 Colores de ondas actualizados: ${color1}, ${color2}, ${color3}`);
+        logger.info(`🌊 Colores de ondas actualizados: ${color1}, ${color2}, ${color3}`);
     }
 
     /**
@@ -1124,7 +1146,7 @@
         // En móviles: actualización menos frecuente para mejor rendimiento
         const updateInterval = isMobile ? 80 : 50; // 80ms vs 50ms
         
-        console.log(`🔊 Fade-in: ${startVolume} → ${targetVolume} en ${duration}ms ${isMobile ? '(móvil optimizado)' : ''}`);
+        logger.dev(`🔊 Fade-in: ${startVolume} → ${targetVolume} en ${duration}ms ${isMobile ? '(móvil optimizado)' : ''}`);
         
         state.volumeFadeInterval = setInterval(() => {
             const elapsed = Date.now() - startTime;
@@ -1144,7 +1166,7 @@
                 clearInterval(state.volumeFadeInterval);
                 state.volumeFadeInterval = null;
                 elements.audio.volume = targetVolume;
-                console.log('✅ Fade-in completado');
+                logger.success('✅ Fade-in completado');
             }
         }, updateInterval); // Intervalo optimizado por dispositivo
     }
@@ -1185,7 +1207,7 @@
             state.hasStartedPlaying = true; // Marcar que el usuario ya presionó play
             
             const totalTime = Date.now() - startTime;
-            console.log(`✅ Audio reproduciendo ${isMobile ? '(MÓVIL)' : '(ESCRITORIO)'} - ${totalTime}ms`);
+            logger.success(`Audio reproduciendo ${isMobile ? '(MÓVIL)' : '(ESCRITORIO)'} - ${totalTime}ms`);
             
             // Fade-in simplificado solo para primera vez
             if (state.isFirstPlay) {
@@ -1207,12 +1229,12 @@
             }, 50);
             
         } catch (error) {
-            console.error('❌ Error al reproducir:', error.message);
+            logger.error('❌ Error al reproducir:', error.message);
             
             // Reintentar con delay
             if (!state.userPaused && state.retryCount < state.maxRetries) {
                 state.retryCount++;
-                console.log(`🔄 Reintento ${state.retryCount}/${state.maxRetries}...`);
+                logger.info(`🔄 Reintento ${state.retryCount}/${state.maxRetries}...`);
                 setTimeout(playAudio, 1500);
             }
         }
@@ -1785,9 +1807,8 @@
                 // Log solo si no es silencioso
                 if (!silent) {
                     logger.success(`✅ Letras cargadas: ${lyrics.length} líneas (inicio: ${elapsed.toFixed(2)}s, delay: ${delayInfo})`);
-                    console.log('%c🎤 LETRAS SINCRONIZADAS', 'background: #fc5e16; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;');
-                    console.log(`Sincronizadas desde el segundo ${elapsed.toFixed(2)} de la canción`);
-                    
+                    logger.dev('🎤 LETRAS SINCRONIZADAS');
+                    logger.dev(`Sincronizadas desde el segundo ${elapsed.toFixed(2)} de la canción`);                    
                     if (logMessage) {
                         console.log(logMessage);
                     }

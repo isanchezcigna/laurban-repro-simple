@@ -34,10 +34,13 @@
     <meta name="twitter:image" content="https://laurban.cl/img/android-chrome-512x512.png">
     <meta name="twitter:url" content="https://laurban.cl">
     
-    <!-- Cargar el CacheManager antes que cualquier otro script -->
+    <!-- Sistema de logging unificado -->
+    <script src="js/logger.js"></script>
+    
+    <!-- Cargar el CacheManager después del logger -->
     <script src="js/cache-manager.js"></script>
     
-    <!-- Suprimir errores de extensiones del navegador ANTES de cualquier código -->
+    <!-- Suprimir errores de extensiones del navegador -->
     <script>
         (function() {
             'use strict';

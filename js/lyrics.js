@@ -13,13 +13,10 @@ const LYRICS_CONFIG = {
     UPDATE_INTERVAL: 100 // Intervalo de actualización en milisegundos
 };
 
-// Log solo en desarrollo local
-const _hostname = globalThis?.location?.hostname ?? '';
-if (_hostname === 'localhost' || _hostname.startsWith('192.168.')) {
-    console.log(`🎵 LYRICS CONFIG: Delay adaptativo activado`);
-    console.log(`📱 Dispositivo: ${isIOS ? 'iOS (iPhone/iPad)' : 'Desktop/Android'}`);
-    console.log(`⏱️ Stream delay: ${LYRICS_CONFIG.STREAM_DELAY}s`);
-}
+// Logs de configuración
+logger.dev(`🎵 LYRICS CONFIG: Delay adaptativo activado`);
+logger.dev(`📱 Dispositivo: ${isIOS ? 'iOS (iPhone/iPad)' : 'Desktop/Android'}`);
+logger.dev(`⏱️ Stream delay: ${LYRICS_CONFIG.STREAM_DELAY}s`);
 
 class LyricsManager {
     constructor() {
@@ -40,7 +37,7 @@ class LyricsManager {
         // Manejar cambios de visibilidad
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                console.log('🎵 Reconectando sistema de letras...');
+                logger.dev('🎵 Reconectando sistema de letras...');
                 if (this.lyrics.length > 0) {
                     this.isActive = true;
                     if (this.useVirtualTime) {
@@ -67,7 +64,7 @@ class LyricsManager {
             }
         });
 
-        console.log('LyricsManager initialized');
+        logger.dev('LyricsManager initialized');
     }
 
     /**
@@ -94,7 +91,7 @@ class LyricsManager {
             }
             
             const delayUsed = customDelay ?? LYRICS_CONFIG.STREAM_DELAY;
-            console.log(`Loaded ${this.lyrics.length} lyrics lines (offset: ${startOffset.toFixed(2)}s, delay: ${delayUsed.toFixed(2)}s)`);
+            logger.dev(`Loaded ${this.lyrics.length} lyrics lines (offset: ${startOffset.toFixed(2)}s, delay: ${delayUsed.toFixed(2)}s)`);
         } else {
             this.hide();
         }
@@ -230,7 +227,7 @@ class LyricsManager {
             }
         }
         
-        console.log(`Lyric displayed: "${current.text}" at ${current.time}s`);
+        logger.dev(`Lyric displayed: "${current.text}" at ${current.time}s`);
     }
 
     /**

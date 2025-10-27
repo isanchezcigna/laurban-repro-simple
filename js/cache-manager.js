@@ -1,14 +1,23 @@
 /**
  * Gestor de caché simplificado para La Urban
  */
+
+// Inicializar logger o usar fallback
+const logger = globalThis.logger || {
+    dev: console.log.bind(console),
+    info: console.log.bind(console),
+    success: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+    critical: console.error.bind(console)
+};
+
 class CacheManager {
-    constructor() {
-        this.laurbanData = null;
-        this.lastCheck = 0;
-        this.currentSongId = null;
-        this.currentLiveState = false;
-        this.updateInterval = 15000; // 15 segundos solo para datos principales
-    }
+    laurbanData = null;
+    lastCheck = 0;
+    currentSongId = null;
+    currentLiveState = false;
+    updateInterval = 15000; // 15 segundos solo para datos principales
 
     /**
      * Verifica si es necesario actualizar los datos principales
@@ -30,13 +39,13 @@ class CacheManager {
         // Verificar cambio de canción
         if (this.laurbanData.now_playing?.id !== newData.now_playing?.id) {
             songChanged = true;
-            console.log('🎵 Detectado cambio de canción');
+            logger.info('🎵 Detectado cambio de canción');
         }
 
         // Verificar cambio en estado de live
         if (this.laurbanData.live?.is_live !== newData.live?.is_live) {
             liveStateChanged = true;
-            console.log('🎥 Detectado cambio en estado de live');
+            logger.info('🎥 Detectado cambio en estado de live');
         }
 
         return songChanged || liveStateChanged;

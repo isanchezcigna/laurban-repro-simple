@@ -6,6 +6,16 @@
 (function () {
     'use strict';
 
+    // Inicializar logger o usar fallback
+    const logger = window.logger || {
+        dev: console.log.bind(console),
+        info: console.log.bind(console),
+        success: console.log.bind(console),
+        warn: console.warn.bind(console),
+        error: console.error.bind(console),
+        critical: console.error.bind(console)
+    };
+
     // Configuración de la aplicación
     const CONFIG = {
         AZURACAST_API_URL: 'https://azura.laurban.cl/api/nowplaying/laurban',
@@ -29,7 +39,7 @@
 
         // Validar que todos los elementos existen
         if (!elements.audio || !elements.currentSongDiv || !elements.lyricsDiv) {
-            console.error('Error: No se encontraron todos los elementos necesarios en el DOM');
+            logger.error('Error: No se encontraron todos los elementos necesarios en el DOM');
             return false;
         }
         
@@ -56,7 +66,7 @@
             
             return data.now_playing.song;
         } catch (error) {
-            console.error('Error al obtener la canción actual:', error);
+            logger.error('Error al obtener la canción actual:', error);
             return null;
         }
     }
@@ -70,7 +80,7 @@
     async function fetchLyrics(trackName, artistName) {
         // Validar API key
         if (!CONFIG.MUSIXMATCH_API_KEY) {
-            console.warn('API key de Musixmatch no configurada');
+            logger.warn('API key de Musixmatch no configurada');
             return 'Para ver las letras, configure una API key válida de Musixmatch';
         }
 
@@ -95,7 +105,7 @@
             
             return 'Letras no disponibles';
         } catch (error) {
-            console.error('Error al obtener las letras:', error);
+            logger.error('Error al obtener las letras:', error);
             return 'No se pudieron cargar las letras';
         }
     }
@@ -143,7 +153,7 @@
             const lyrics = await fetchLyrics(song.title, song.artist);
             updateLyricsDisplay(lyrics);
         } catch (error) {
-            console.error('Error al actualizar la información:', error);
+            logger.error('Error al actualizar la información:', error);
         }
     }
 

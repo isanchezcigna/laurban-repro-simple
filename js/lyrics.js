@@ -14,7 +14,8 @@ const LYRICS_CONFIG = {
 };
 
 // Log solo en desarrollo local
-if (window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.')) {
+const _hostname = globalThis?.location?.hostname ?? '';
+if (_hostname === 'localhost' || _hostname.startsWith('192.168.')) {
     console.log(`🎵 LYRICS CONFIG: Delay adaptativo activado`);
     console.log(`📱 Dispositivo: ${isIOS ? 'iOS (iPhone/iPad)' : 'Desktop/Android'}`);
     console.log(`⏱️ Stream delay: ${LYRICS_CONFIG.STREAM_DELAY}s`);
@@ -35,6 +36,21 @@ class LyricsManager {
         this.useVirtualTime = false; // Si usa tiempo virtual basado en Azura
         this.updateInterval = null; // Intervalo para actualizar letras
         this.customDelay = null; // Delay personalizado (null = usar LYRICS_CONFIG.STREAM_DELAY)
+
+        // Manejar cambios de visibilidad
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                console.log('🎵 Reconectando sistema de letras...');
+                if (this.lyrics.length > 0) {
+                    this.isActive = true;
+                    if (this.useVirtualTime) {
+                        this.startVirtualTimeUpdate();
+                    }
+                    this.updateLyrics();
+                    this.show();
+                }
+            }
+        });
     }
 
     /**
@@ -77,7 +93,7 @@ class LyricsManager {
                 this.startVirtualTimeUpdate();
             }
             
-            const delayUsed = customDelay !== null ? customDelay : LYRICS_CONFIG.STREAM_DELAY;
+            const delayUsed = customDelay ?? LYRICS_CONFIG.STREAM_DELAY;
             console.log(`Loaded ${this.lyrics.length} lyrics lines (offset: ${startOffset.toFixed(2)}s, delay: ${delayUsed.toFixed(2)}s)`);
         } else {
             this.hide();
@@ -95,7 +111,7 @@ class LyricsManager {
         
         // Actualizar usando el intervalo configurado
         this.updateInterval = setInterval(() => {
-            if (this.isActive && this.lyrics.length > 0 && this.useVirtualTime) {
+            if (this.isActive && this.lyrics.length > 0 && this.useVirtualTime && !document.hidden) {
                 this.updateLyrics();
             }
         }, LYRICS_CONFIG.UPDATE_INTERVAL);
@@ -121,7 +137,7 @@ class LyricsManager {
             const elapsed = (Date.now() - this.songStartTimestamp) / 1000;
             // Restar delay para compensar latencia del stream
             // Usar customDelay si está definido, sino usar el delay por defecto
-            const delay = this.customDelay !== null ? this.customDelay : LYRICS_CONFIG.STREAM_DELAY;
+            const delay = this.customDelay ?? LYRICS_CONFIG.STREAM_DELAY;
             return Math.max(0, this.timeOffset + elapsed - delay);
         } else {
             // Tiempo del elemento de audio
@@ -140,12 +156,12 @@ class LyricsManager {
         // Regex para detectar [mm:ss.xx] o [mm:ss]
         const timeRegex = /\[(\d{2}):(\d{2})\.?(\d{2,3})?\]/;
         
-        lines.forEach(line => {
+        for (const line of lines) {
             const match = timeRegex.exec(line);
             if (match) {
-                const minutes = parseInt(match[1]);
-                const seconds = parseInt(match[2]);
-                const centiseconds = match[3] ? parseInt(match[3]) : 0;
+                const minutes = Number.parseInt(match[1]);
+                const seconds = Number.parseInt(match[2]);
+                const centiseconds = match[3] ? Number.parseInt(match[3]) : 0;
                 
                 const time = minutes * 60 + seconds + (centiseconds / (match[3]?.length === 3 ? 1000 : 100));
                 const text = line.replace(timeRegex, '').trim();
@@ -154,7 +170,7 @@ class LyricsManager {
                     lyrics.push({ time, text });
                 }
             }
-        });
+        }
         
         this.loadLyrics(lyrics);
     }
@@ -239,6 +255,11 @@ class LyricsManager {
      */
     hide() {
         if (this.lyricsOverlay) {
+            // No desactivar si hay letras cargadas
+            if (this.lyrics.length === 0) {
+                this.isActive = false;
+            }
+            
             // Fade out
             this.lyricsOverlay.classList.remove('active');
             if (this.lyricsBackdrop) {
@@ -248,14 +269,14 @@ class LyricsManager {
             setTimeout(() => {
                 this.lyricsOverlay.style.display = 'none';
             }, 1200); // 1.2s = duración de la transición CSS
-            this.isActive = false;
         }
     }
 
     /**
      * Limpia las letras actuales
+     * @param {boolean} keepActive - Si es true, mantiene el sistema activo aunque se limpien las letras
      */
-    clear() {
+    clear(keepActive = true) {
         this.lyrics = [];
         this.currentIndex = -1;
         this.timeOffset = 0;
@@ -266,7 +287,19 @@ class LyricsManager {
         
         if (this.lyricsCurrent) this.lyricsCurrent.textContent = '';
         if (this.lyricsPrevious) this.lyricsPrevious.textContent = '';
-        this.hide();
+        
+        if (keepActive) {
+            // Solo ocultamos visualmente pero mantenemos el sistema activo
+            if (this.lyricsOverlay) {
+                this.lyricsOverlay.classList.remove('active');
+                if (this.lyricsBackdrop) {
+                    this.lyricsBackdrop.classList.remove('active');
+                }
+            }
+        } else {
+            // Desactivación completa
+            this.hide();
+        }
     }
 
     /**
@@ -289,4 +322,5 @@ class LyricsManager {
 }
 
 // Exportar para uso global
-window.LyricsManager = LyricsManager;
+globalThis.LyricsManager = LyricsManager;
+ 

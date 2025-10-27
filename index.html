@@ -64,7 +64,7 @@
             };
             
             // Suprimir errores globales de extensiones
-            window.addEventListener('error', function(e) {
+            globalThis.addEventListener('error', function(e) {
                 if (e.message && (
                     e.message.includes('message port closed') ||
                     e.message.includes('Extension context') ||

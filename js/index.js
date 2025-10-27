@@ -1478,11 +1478,27 @@
         const { mainArtist, formattedTitle } = parseArtistInfo(artist, songTitle);
         const songText = `Escuchas: ${mainArtist} - ${formattedTitle}`;
 
-        // Detectar cambio de canción por ID (solo para log, no actualizar lastSongId aquí)
+        // Detectar cambio de canción por ID
         const songChanged = state.lastSongId !== null && state.lastSongId !== songId;
         
         if (songChanged) {
             console.log(`🎵 Nueva canción: ${mainArtist} - ${formattedTitle}`);
+            
+            // Asegurarnos de que la interfaz de letras se reinicie correctamente
+            if (state.lyricsManager) {
+                // Primero limpiamos el estado actual
+                state.lyricsManager.clear();
+                
+                // Forzar un reinicio del sistema de visualización
+                state.lyricsManager.show();
+                
+                // Si estamos usando tiempo virtual, reiniciar el intervalo
+                if (state.lyricsManager.useVirtualTime) {
+                    state.lyricsManager.startVirtualTimeUpdate();
+                }
+                
+                console.log('🎵 Sistema de letras reiniciado para nueva canción');
+            }
         }
         
         // NO actualizar lastSongId aquí, se hace en la sección de letras para tener control total
@@ -1573,18 +1589,57 @@
                 }
             }
 
-            let response = await fetch(url);
-            let usedSecondAttempt = false; // Flag para saber si usó el segundo intento
+            // Variables para controlar el flujo
+            let response = null;
+            let attemptUsed = 'none';
+            const hasMultipleArtists = artist.includes(';');
+            const firstArtist = hasMultipleArtists ? artist.split(';')[0].trim() : artist;
             
-            // Si falla con 404 y había duration, reintentar sin duration
-            if (!response.ok && response.status === 404 && duration) {
+            // Primer intento: primer artista con duración
+            if (hasMultipleArtists) {
                 if (!silent) {
-                    logger.info('🔄 Reintentando búsqueda sin parámetro de duración...');
+                    logger.info(`🔍 Primer intento: búsqueda con primer artista (${firstArtist}) y duración...`);
                 }
-                
+                const urlFirstArtistWithDuration = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(firstArtist)}&track_name=${encodeURIComponent(title)}&duration=${Math.floor(duration)}`;
+                response = await fetch(urlFirstArtistWithDuration);
+                if (response.ok) {
+                    attemptUsed = 'first';
+                }
+            }
+            
+            // Segundo intento: primer artista sin duración
+            if (!response?.ok && (!response || response.status === 404) && hasMultipleArtists) {
+                if (!silent) {
+                    logger.info(`🔄 Segundo intento: búsqueda con primer artista (${firstArtist}) sin duración...`);
+                }
+                const urlFirstArtistWithoutDuration = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(firstArtist)}&track_name=${encodeURIComponent(title)}`;
+                response = await fetch(urlFirstArtistWithoutDuration);
+                if (response.ok) {
+                    attemptUsed = 'second';
+                }
+            }
+            
+            // Tercer intento: artista completo con duración
+            if (!response?.ok && (!response || response.status === 404)) {
+                if (!silent) {
+                    logger.info('🔄 Tercer intento: búsqueda completa con duración...');
+                }
+                response = await fetch(url); // url ya incluye duración
+                if (response.ok) {
+                    attemptUsed = 'third';
+                }
+            }
+            
+            // Cuarto intento: artista completo sin duración
+            if (!response?.ok && (!response || response.status === 404)) {
+                if (!silent) {
+                    logger.info('🔄 Cuarto intento: búsqueda con artista completo sin duración...');
+                }
                 const urlWithoutDuration = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
                 response = await fetch(urlWithoutDuration);
-                usedSecondAttempt = true; // Marcamos que usó el segundo intento
+                if (response.ok) {
+                    attemptUsed = 'fourth';
+                }
             }
             
             if (!response.ok) {
@@ -1623,21 +1678,45 @@
                 });
                 
                 // Determinar delay según el intento que funcionó
-                // Segundo intento (sin duration) = 0.5s delay (temporal)
-                // Primer intento (con duration) = null (usa delay por defecto original)
-                const customDelay = usedSecondAttempt ? 0.5 : null;
+                let customDelay = null;
+                let delayInfo = 'normal (por defecto)';
+                let logMessage = '';
+
+                // Asignar delays según el intento exitoso
+                switch (attemptUsed) {
+                    case 'first':  // Primer artista con duración
+                        customDelay = 0.3;
+                        delayInfo = '0.3s (primer artista con duración)';
+                        logMessage = `⚡ Delay ajustado a 0.3s por búsqueda usando solo "${firstArtist}" con duración`;
+                        break;
+                    case 'second': // Primer artista sin duración
+                        customDelay = 0.5;
+                        delayInfo = '0.5s (primer artista sin duración)';
+                        logMessage = `⚡ Delay ajustado a 0.5s por búsqueda usando solo "${firstArtist}" sin duración`;
+                        break;
+                    case 'third':  // Artista completo con duración
+                        customDelay = 0.7;
+                        delayInfo = '0.7s (artista completo con duración)';
+                        logMessage = '⚡ Delay ajustado a 0.7s por búsqueda con artista completo';
+                        break;
+                    case 'fourth': // Artista completo sin duración
+                        customDelay = 1.0;
+                        delayInfo = '1.0s (artista completo sin duración)';
+                        logMessage = '⚡ Delay ajustado a 1.0s por búsqueda con artista completo sin duración';
+                        break;
+                }
                 
                 // Cargar letras con el offset de tiempo transcurrido y delay personalizado
                 state.lyricsManager.loadLyrics(lyrics, elapsed, customDelay);
                 
                 // Log solo si no es silencioso
                 if (!silent) {
-                    const delayInfo = usedSecondAttempt ? '0.5s (búsqueda sin duración)' : 'normal (por defecto)';
                     logger.success(`✅ Letras cargadas: ${lyrics.length} líneas (inicio: ${elapsed.toFixed(2)}s, delay: ${delayInfo})`);
                     console.log('%c🎤 LETRAS SINCRONIZADAS', 'background: #fc5e16; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;');
                     console.log(`Sincronizadas desde el segundo ${elapsed.toFixed(2)} de la canción`);
-                    if (usedSecondAttempt) {
-                        console.log('⚡ Delay ajustado a 0.5s por búsqueda sin duración exacta');
+                    
+                    if (logMessage) {
+                        console.log(logMessage);
                     }
                 }
             } else {
@@ -1697,6 +1776,7 @@
                 artist: radioData.now_playing?.song?.artist,
                 title: radioData.now_playing?.song?.title
             });
+            logger.dev('Data canción:', radioData.now_playing?.song);
             
             if (currentSongId && (isFirstLoad || songChanged)) {
                 state.lastSongId = currentSongId;
@@ -2214,6 +2294,11 @@
             // La app volvió al frente y el audio está reproduciendo
             // Verificar si necesitamos reconectar al vivo
             console.log('👀 App visible - verificando estado del stream...');
+            
+            // Actualizar las letras si están activas
+            if (window.lyricsManager && window.lyricsManager.isActive) {
+                window.lyricsManager.startVirtualTimeUpdate();
+            }
             
             // Si hubo una interrupción, reconectar
             if (state.wasInterrupted) {

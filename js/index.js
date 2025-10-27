@@ -114,6 +114,9 @@
         THEME_LIGHT_END: 18
     };
 
+    // Inicializar el gestor de caché
+    const cacheManager = new CacheManager();
+
     // Estado de la aplicación
     const state = {
         userPaused: false,
@@ -1065,29 +1068,33 @@
      * @param {Object} data - Datos de la canción actual de la API
      * @param {boolean} coverUpdate - Si se debe actualizar la carátula
      */
-    function updateMediaSession(data, coverUpdate = false) {
+    function updateMediaSession(data) {
         if (!('mediaSession' in navigator)) {
             return;
         }
 
+        // Evitar actualizar el artwork si no ha cambiado
         const albumArt = data?.now_playing?.song?.art || CONFIG.DEFAULT_COVER;
-        
-        if (coverUpdate && elements.cover) {
-            elements.cover.src = albumArt;
+        if (state.lastMediaSessionArt !== albumArt) {
+            state.lastMediaSessionArt = albumArt;
+            const artwork = [{
+                src: albumArt,
+                sizes: '512x512',
+                type: 'image/jpeg'
+            }];
+
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: `La Urban: ${data?.now_playing?.song?.title || 'Música'}`,
+                artist: data?.now_playing?.song?.artist || 'Artista desconocido',
+                album: data?.now_playing?.song?.album || '',
+                artwork
+            });
+        } else if (data?.now_playing?.song?.title) {
+            // Solo actualizar metadata de texto si hay nueva info
+            navigator.mediaSession.metadata.title = `La Urban: ${data.now_playing.song.title}`;
+            navigator.mediaSession.metadata.artist = data.now_playing.song.artist || 'Artista desconocido';
+            navigator.mediaSession.metadata.album = data.now_playing.song.album || '';
         }
-
-        const artwork = [96, 128, 192, 256, 384, 512].map(size => ({
-            src: albumArt,
-            sizes: `${size}x${size}`,
-            type: 'image/jpeg'
-        }));
-
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: `La Urban: ${data?.now_playing?.song?.title || 'Música'}`,
-            artist: data?.now_playing?.song?.artist || 'Artista desconocido',
-            album: data?.now_playing?.song?.album || '',
-            artwork
-        });
 
         // Configurar el estado según si está reproduciendo
         navigator.mediaSession.playbackState = elements.audio.paused ? 'paused' : 'playing';
@@ -1266,19 +1273,49 @@
      * Obtiene los datos actuales de la radio desde la API
      * @returns {Promise<Object|null>} Datos de la radio o null en caso de error
      */
-    async function getRadioData() {
+    async function getRadioData(retryCount = 0) {
         try {
-            // Agregar timestamp para evitar cache y obtener datos frescos
-            // NO usamos headers custom para evitar problemas de CORS preflight
-            const timestamp = new Date().getTime();
-            const response = await fetch(`${CONFIG.API_URL}?_=${timestamp}`);
+            // Agregar timestamp para evitar caché
+            const timestamp = Date.now();
+            const url = `${CONFIG.API_URL}?_=${timestamp}`;
+            
+            // Obtener datos frescos
+            const response = await fetch(url);
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return await response.json();
+
+            const data = await response.json();
+
+            // Si hay cambios significativos (canción o live), actualizar
+            if (cacheManager.hasChanged(data)) {
+                cacheManager.update(data);
+            }
+
+            // Si la petición fue exitosa, reiniciar el contador de reintentos
+            state.radioDataRetryCount = 0;
+            return data;
         } catch (error) {
+            console.error('Error obteniendo datos de radio:', error);
+            
+            // Incrementar contador de reintentos
+            state.radioDataRetryCount = (state.radioDataRetryCount || 0) + 1;
+            
+            // Si no hemos excedido el máximo de reintentos, programar reintento
+            if (retryCount < 3) {
+                const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Backoff exponencial, max 10s
+                logger.warn(`Reintentando en ${retryDelay/1000}s (intento ${retryCount + 1}/3)...`);
+                
+                return new Promise(resolve => {
+                    setTimeout(async () => {
+                        const result = await getRadioData(retryCount + 1);
+                        resolve(result);
+                    }, retryDelay);
+                });
+            }
             console.error('Error al obtener la información de la canción:', error);
-            return null;
+            return cachedData || null;
         }
     }
 
@@ -1393,10 +1430,6 @@
         }
         
         document.title = livetitle;
-        
-        if (!state.showingKickVideo && elements.cover) {
-            elements.cover.src = liveart;
-        }
     }
 
     /**
@@ -1404,7 +1437,18 @@
      * @param {string} newCoverUrl - URL del nuevo cover
      */
     function updateCoverWithTransition(newCoverUrl) {
-        if (!elements.cover || !elements.coverNext || state.currentCoverUrl === newCoverUrl) {
+        if (!elements.cover || !elements.coverNext) {
+            return;
+        }
+
+        // Validar y normalizar URL
+        if (!newCoverUrl || newCoverUrl === state.currentCoverUrl) {
+            return;
+        }
+
+        // Si es una imagen en blanco o la URL por defecto al inicio, ignorar
+        if (newCoverUrl === 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' ||
+            (state.isFirstLoad && newCoverUrl === CONFIG.DEFAULT_COVER)) {
             return;
         }
 
@@ -1412,9 +1456,25 @@
         const currentCover = elements.cover.classList.contains('active') ? elements.cover : elements.coverNext;
         const nextCover = currentCover === elements.cover ? elements.coverNext : elements.cover;
 
+        // Validación de URL antes de precargar
+        if (!newCoverUrl || newCoverUrl === 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7') {
+            return;
+        }
+
         // PRECARGAR la nueva imagen en la imagen inactiva
         const preloadImg = new Image();
+        preloadImg.onerror = () => {
+            console.warn('Error al cargar cover:', newCoverUrl);
+            newCoverUrl = CONFIG.DEFAULT_COVER;
+            // Reintentar con el cover por defecto
+            updateCoverWithTransition(CONFIG.DEFAULT_COVER);
+        };
         preloadImg.onload = () => {
+            // Verificar que aún queremos esta imagen
+            if (state.currentCoverUrl === newCoverUrl) {
+                return;
+            }
+
             // Cargar la nueva imagen en el elemento inactivo (YA ESTÁ LISTA)
             nextCover.src = newCoverUrl;
             
@@ -1570,9 +1630,22 @@
      * @param {boolean} silent - Si es true, no muestra logs de error (solo para búsqueda automática)
      */
     async function fetchAndLoadLyrics(artist, title, duration = null, elapsed = 0, silent = false) {
-        if (!state.lyricsManager) {
+        if (!state.lyricsManager || !state.hasStartedPlaying) {
             return;
         }
+
+        // Variable para controlar intentos totales
+        if (!state.lyricsFetchAttempts) {
+            state.lyricsFetchAttempts = 0;
+        }
+
+        // Limitar a máximo 4 intentos por canción
+        if (state.lyricsFetchAttempts >= 4) {
+            logger.dev('🚫 Máximo de intentos de búsqueda de letras alcanzado');
+            return;
+        }
+        
+        state.lyricsFetchAttempts++;
 
         try {
             // Construir URL de LRCLIB
@@ -1719,13 +1792,40 @@
                         console.log(logMessage);
                     }
                 }
+            } else if (data.plainLyrics) {
+                // Si hay letras planas, intentar convertirlas en formato sincronizado
+                const lines = data.plainLyrics.split('\n').filter(line => line.trim());
+                if (lines.length > 0) {
+                    const lyrics = [];
+                    const totalDuration = duration || 240; // Si no hay duración, asumimos 4 minutos
+                    const timePerLine = totalDuration / lines.length;
+                    
+                    lines.forEach((line, index) => {
+                        if (line.trim()) {
+                            lyrics.push({
+                                time: timePerLine * index,
+                                text: line.trim()
+                            });
+                        }
+                    });
+                    
+                    // Usar un delay más largo para letras no sincronizadas
+                    const customDelay = 1.5;
+                    state.lyricsManager.loadLyrics(lyrics, elapsed, customDelay);
+                    
+                    // Log solo si no es silencioso
+                    if (!silent) {
+                        logger.info('ℹ️ Usando letras sin sincronización (distribución automática)');
+                        logger.success(`✅ Letras cargadas: ${lyrics.length} líneas (distribución cada ${timePerLine.toFixed(2)}s)`);
+                    }
+                } else {
+                    state.lyricsManager.clear();
+                }
             } else {
-                // Limpiar letras si solo hay letras sin sincronización
+                // No hay letras disponibles
                 state.lyricsManager.clear();
-                
-                // Log solo si no es silencioso
-                if (!silent && data.plainLyrics) {
-                    logger.info('ℹ️ Solo hay letras sin sincronización disponibles');
+                if (!silent) {
+                    logger.info('ℹ️ No hay letras disponibles para esta canción');
                 }
             }
         } catch (error) {
@@ -1739,30 +1839,67 @@
         }
     }
 
-    async function updateSongInfo() {
+    /**
+     * Programa la próxima actualización basada en el tiempo restante de la canción
+     * @param {number} remainingTime - Tiempo restante en segundos
+     * @param {boolean} isLive - Si es transmisión en vivo
+     */
+    function scheduleNextUpdate(remainingTime, isLive) {
+        // Limpiar cualquier temporizador existente
+        if (state.nextUpdateTimeout) {
+            clearTimeout(state.nextUpdateTimeout);
+        }
+
+        // Si es live o no tenemos tiempo restante, usar intervalo por defecto
+        if (isLive || !remainingTime || remainingTime <= 0) {
+            state.nextUpdateTimeout = setTimeout(() => updateSongInfo(), CONFIG.UPDATE_INTERVAL);
+            return;
+        }
+
+        // Añadir un pequeño margen de seguridad (2 segundos)
+        const updateDelay = (remainingTime * 1000) + 2000;
+
+        // Programar la próxima actualización
+        logger.dev(`📅 Próxima actualización en ${Math.round(updateDelay/1000)}s (${new Date(Date.now() + updateDelay).toLocaleTimeString()})`);
+        state.nextUpdateTimeout = setTimeout(() => updateSongInfo(), updateDelay);
+    }
+
+    async function updateSongInfo(forceUpdate = false) {
         try {
-            const [radioData, kickLive] = await Promise.all([
-                getRadioData(),
-                getKickLiveInfo()
-            ]);
+            // No actualizar si es la primera carga y no es forzado
+            if (!forceUpdate && !state.hasStartedPlaying) {
+                return;
+            }
+
+            // Obtener datos actualizados
+            const radioData = await getRadioData();
             
             if (!radioData) {
                 return;
             }
 
-            state.isKickLive = kickLive;
-            const isLive = radioData.live?.is_live || false;
-
-            if (isLive) {
-                updateLiveInfo(radioData);
-            } else {
-                updateSongInfoUI(radioData);
-            }
-            
-            // 🎵 BÚSQUEDA DE LETRAS - Funciona tanto en modo live como en modo canción
             const currentSongId = radioData.now_playing?.song?.id;
-            const isFirstLoad = state.lastSongId === null && state.hasStartedPlaying;
-            const songChanged = currentSongId && currentSongId !== state.lastSongId && state.hasStartedPlaying;
+            const currentTitle = radioData.now_playing?.song?.title;
+            const currentArtist = radioData.now_playing?.song?.artist;
+
+            // Determinar si es primera carga o cambio de canción
+            const isFirstLoad = state.lastSongId === null;
+            const songChanged = currentSongId && (
+                currentSongId !== state.lastSongId || // ID diferente
+                forceUpdate || // Forzar actualización
+                !state.lastTitle || // No hay título anterior
+                !state.lastArtist || // No hay artista anterior
+                currentTitle !== state.lastTitle || // Título diferente
+                currentArtist !== state.lastArtist // Artista diferente
+            );
+            
+            // Solo verificar Kick si cambia la canción o es primera carga
+            if (songChanged || isFirstLoad) {
+                const kickLive = await getKickLiveInfo();
+                state.isKickLive = kickLive;
+            }
+
+            const isLive = radioData.live?.is_live || false;
             
             // Log solo en desarrollo para debugging
             logger.dev('🔍 DEBUG LETRAS:', {
@@ -1779,26 +1916,49 @@
             logger.dev('Data canción:', radioData.now_playing?.song);
             
             if (currentSongId && (isFirstLoad || songChanged)) {
+                // Actualizar estado de la canción actual
                 state.lastSongId = currentSongId;
+                state.lastTitle = currentTitle;
+                state.lastArtist = currentArtist;
+                
+                // Reiniciar contador de intentos de letras
+                state.lyricsFetchAttempts = 0;
                 
                 // Limpiar letras anteriores inmediatamente (excepto en primera carga)
                 if (state.lyricsManager && !isFirstLoad) {
                     state.lyricsManager.clear();
                 }
                 
-                const artist = radioData.now_playing?.song?.artist || '';
-                const title = radioData.now_playing?.song?.title || '';
+                const artist = currentArtist || '';
+                const title = currentTitle || '';
                 const duration = radioData.now_playing?.duration || null;
                 const elapsed = radioData.now_playing?.elapsed || 0;
+
+                // Solo buscar letras si está reproduciendo o es forzado
+                if (artist && title && (state.hasStartedPlaying || forceUpdate)) {
+                    logger.info(`🎵 Nueva canción detectada: ${artist} - ${title}`);
+                    fetchAndLoadLyrics(artist, title, duration, elapsed, false);
+                }
                 
                 // Guardar datos de tiempo en el estado
                 state.songElapsed = elapsed;
                 state.songDuration = duration;
                 state.songStartTime = Date.now() - (elapsed * 1000);
-                
-                if (artist && title) {
-                    // Buscar letras en segundo plano con el tiempo transcurrido (modo silencioso)
-                    fetchAndLoadLyrics(artist, title, duration, elapsed, true);
+
+                // Ya buscamos las letras arriba, aquí solo actualizamos el tiempo
+
+                // Calcular tiempo restante para programar próxima actualización
+                if (duration && elapsed) {
+                    const remainingTime = duration - elapsed;
+                    logger.dev(`⏱️ Tiempo restante: ${remainingTime}s de ${duration}s (${Math.round((elapsed/duration)*100)}%)`);
+                    scheduleNextUpdate(remainingTime, isLive);
+                }
+            } else {
+                // Si no hubo cambio de canción, programar siguiente actualización basada en el tiempo restante
+                if (state.songDuration && state.songElapsed) {
+                    const currentElapsed = state.songElapsed + ((Date.now() - state.songStartTime) / 1000);
+                    const remainingTime = state.songDuration - currentElapsed;
+                    scheduleNextUpdate(remainingTime, isLive);
                 }
             }
 
@@ -1809,7 +1969,47 @@
                 hideKickVideo();
             }
 
-            updateMediaSession(radioData, !state.showingKickVideo);
+            // Actualizar interfaz basada en si es live o no
+            if (isLive) {
+                updateLiveInfo(radioData);
+            } else {
+                updateSongInfoUI(radioData);
+            }
+
+            // Actualizar cover y MediaSession solo cuando sea necesario
+            const newCoverUrl = isLive 
+                ? radioData.live?.art || CONFIG.DEFAULT_COVER
+                : radioData.now_playing?.song?.art || CONFIG.DEFAULT_COVER;
+
+            // Condiciones para actualizar el cover:
+            // 1. No estamos mostrando el video de Kick
+            // 2. El cover ha cambiado realmente
+            // 3. Es una actualización forzada o ha cambiado la canción
+            if (!state.showingKickVideo && 
+                state.currentCoverUrl !== newCoverUrl &&
+                (forceUpdate || songChanged)) {
+                
+                // Actualizar cover
+                updateCoverWithTransition(newCoverUrl);
+                
+                // Actualizar MediaSession con el mismo artwork
+                if ('mediaSession' in navigator && state.lastMediaSessionArt !== newCoverUrl) {
+                    state.lastMediaSessionArt = newCoverUrl;
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: `La Urban: ${radioData.now_playing?.song?.title || 'Música'}`,
+                        artist: radioData.now_playing?.song?.artist || 'Artista desconocido',
+                        album: radioData.now_playing?.song?.album || '',
+                        artwork: [{
+                            src: newCoverUrl,
+                            sizes: '512x512',
+                            type: 'image/jpeg'
+                        }]
+                    });
+                }
+            }
+
+            // Actualizar solo el botón dinámico
+            updateMediaSession(radioData);
             configureDynamicButton(isLive);
             
         } catch (error) {
@@ -2033,6 +2233,13 @@
             console.log('🎵 Audio playing event');
             document.body.classList.add('audio-playing'); // Mostrar olas SVG
             updateCustomPlayButton();
+            
+            // Forzar una actualización de los datos solo la primera vez que se reproduce
+            if (!state.hasStartedPlaying) {
+                state.hasStartedPlaying = true;
+                updateSongInfo(true);
+            }
+            
             if (!state.audioContext) {
                 setTimeout(() => {
                     initializeAudioVisualizer();
@@ -2213,6 +2420,9 @@
         setThemeByTime();
         enableChatCanvas();
         
+        // Primera carga silenciosa de datos
+        updateSongInfo(true);
+        
         // Inicializar gestor de letras sincronizadas
         if (typeof LyricsManager !== 'undefined') {
             state.lyricsManager = new LyricsManager();
@@ -2227,11 +2437,10 @@
         // 🚀 PRELOAD DEL STREAM - Temporalmente deshabilitado para debug
         // preloadAudioStream();
         
-        // Primera actualización inmediata sin delay
-        updateSongInfo();
-        
-        // Actualizaciones periódicas cada 5 segundos
-        setInterval(updateSongInfo, CONFIG.UPDATE_INTERVAL);
+        // Primera actualización con el nuevo sistema
+        updateSongInfo(true).then(() => {
+            logger.success('✅ Primera actualización completada');
+        });
         
         initializeAutoplay();
         startSloganRotation(); // Iniciar rotación de frases históricas

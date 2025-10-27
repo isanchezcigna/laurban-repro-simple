@@ -8,7 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <!-- Usar un solo favicon optimizado -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="site.webmanifest">
     <meta name="description" content="La Urban es una radio online que transmite música urbana las 24 horas del día.">
     <meta name="keywords" content="radio, online, música, urbana, reggaeton, trap, rap, hip hop, la urban">
@@ -32,6 +33,9 @@
     <meta name="twitter:description" content="La Urban es una emisora online que transmite música urbana las 24 horas del día.">
     <meta name="twitter:image" content="https://laurban.cl/img/android-chrome-512x512.png">
     <meta name="twitter:url" content="https://laurban.cl">
+    
+    <!-- Cargar el CacheManager antes que cualquier otro script -->
+    <script src="js/cache-manager.js"></script>
     
     <!-- Suprimir errores de extensiones del navegador ANTES de cualquier código -->
     <script>
@@ -129,8 +133,8 @@
         <div class="player-content" id="playerContent">
             <img src="img/logo.png" alt="Logo" class="logo" id="logo">
             <div class="cover-container">
-                <img id="cover" src="https://laurban.cl/img/default.jpg" alt="Carátula del Álbum" class="cover active">
-                <img id="coverNext" src="https://laurban.cl/img/default.jpg" alt="Carátula del Álbum" class="cover">
+                <img id="cover" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Carátula del Álbum" class="cover active">
+                <img id="coverNext" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Carátula del Álbum" class="cover">
                 <!-- Indicador de volumen sobre el cover -->
                 <div id="volumeIndicator" class="volume-indicator">100%</div>
                 <!-- Oscurecimiento suave cuando aparecen letras -->

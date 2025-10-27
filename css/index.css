@@ -1628,6 +1628,7 @@ audio::-webkit-media-controls-fullscreen-button {
         min-width: unset; /* Remover min-width fijo */
         padding: 20px;
         margin: 20px auto; /* Centrar con margen uniforme */
+        overflow-x: hidden;
     }
     
     /* Logo muy arriba con margen bottom para balancear */
@@ -1664,6 +1665,7 @@ audio::-webkit-media-controls-fullscreen-button {
         max-width: calc(100vw - 60px);
         padding: 22px;
         margin: 20px auto;
+        overflow-x: hidden;
     }
     
     /* En pantallas medianas, dos columnas si hay espacio */
@@ -1685,6 +1687,7 @@ audio::-webkit-media-controls-fullscreen-button {
         min-width: unset;
         padding: 18px 15px;
         margin: 15px auto;
+        overflow-x: hidden;
     }
     
     /* Logo muy arriba con margen bottom para balancear */
@@ -1747,6 +1750,7 @@ audio::-webkit-media-controls-fullscreen-button {
     .player-container {
         margin: 10px auto;
         min-width: 350px !important; /* Forzar ancho mínimo en landscape */
+        overflow-x: hidden;
     }
 }
 
@@ -1760,6 +1764,7 @@ audio::-webkit-media-controls-fullscreen-button {
         padding: 20px; /* Padding interno más compacto */
         box-sizing: border-box;
         overflow-y: auto; /* Permitir scroll si es necesario */
+        overflow-x: hidden;
     }
     
     /* Ajustar logo para que no ocupe tanto espacio */
@@ -1957,6 +1962,7 @@ audio::-webkit-media-controls-fullscreen-button {
         max-height: 95vh; /* Permitir un poco de scroll si es necesario */
         max-height: calc(-webkit-fill-available * 0.95);
         overflow-y: auto; /* Permitir scroll interno si es necesario */
+        overflow-x: hidden;
         padding: 15px;
         box-sizing: border-box;
         min-width: 350px; /* Ancho mínimo para tablets/iPads */

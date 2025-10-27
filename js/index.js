@@ -629,7 +629,7 @@
             }
             const bassAvg = (bassSum / bassEnd) / 255;
 
-            applyBackgroundEffects(highAvg, highMidAvg, midAvg, bassAvg);
+            // applyBackgroundEffects(highAvg, highMidAvg, midAvg, bassAvg);
         }
 
         animateBackground();
@@ -1773,33 +1773,33 @@
                 });
                 
                 // Determinar delay según el intento que funcionó
-                let customDelay = null;
+                let customDelay = 0.5;
                 let delayInfo = 'normal (por defecto)';
                 let logMessage = '';
 
                 // Asignar delays según el intento exitoso
-                switch (attemptUsed) {
-                    case 'first':  // Primer artista con duración
-                        customDelay = 0.3;
-                        delayInfo = '0.3s (primer artista con duración)';
-                        logMessage = `⚡ Delay ajustado a 0.3s por búsqueda usando solo "${firstArtist}" con duración`;
-                        break;
-                    case 'second': // Primer artista sin duración
-                        customDelay = 0.5;
-                        delayInfo = '0.5s (primer artista sin duración)';
-                        logMessage = `⚡ Delay ajustado a 0.5s por búsqueda usando solo "${firstArtist}" sin duración`;
-                        break;
-                    case 'third':  // Artista completo con duración
-                        customDelay = 0.7;
-                        delayInfo = '0.7s (artista completo con duración)';
-                        logMessage = '⚡ Delay ajustado a 0.7s por búsqueda con artista completo';
-                        break;
-                    case 'fourth': // Artista completo sin duración
-                        customDelay = 1.0;
-                        delayInfo = '1.0s (artista completo sin duración)';
-                        logMessage = '⚡ Delay ajustado a 1.0s por búsqueda con artista completo sin duración';
-                        break;
-                }
+                // switch (attemptUsed) {
+                //     case 'first':  // Primer artista con duración
+                //         customDelay = 0.3;
+                //         delayInfo = '0.3s (primer artista con duración)';
+                //         logMessage = `⚡ Delay ajustado a 0.3s por búsqueda usando solo "${firstArtist}" con duración`;
+                //         break;
+                //     case 'second': // Primer artista sin duración
+                //         customDelay = 0.5;
+                //         delayInfo = '0.5s (primer artista sin duración)';
+                //         logMessage = `⚡ Delay ajustado a 0.5s por búsqueda usando solo "${firstArtist}" sin duración`;
+                //         break;
+                //     case 'third':  // Artista completo con duración
+                //         customDelay = 0.7;
+                //         delayInfo = '0.7s (artista completo con duración)';
+                //         logMessage = '⚡ Delay ajustado a 0.7s por búsqueda con artista completo';
+                //         break;
+                //     case 'fourth': // Artista completo sin duración
+                //         customDelay = 1.0;
+                //         delayInfo = '1.0s (artista completo sin duración)';
+                //         logMessage = '⚡ Delay ajustado a 1.0s por búsqueda con artista completo sin duración';
+                //         break;
+                // }
                 
                 // Cargar letras con el offset de tiempo transcurrido y delay personalizado
                 state.lyricsManager.loadLyrics(lyrics, elapsed, customDelay);
